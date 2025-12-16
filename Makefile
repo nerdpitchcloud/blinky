@@ -1,29 +1,35 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic -Iinclude
-LDFLAGS =
+.PHONY: all clean agent collector install help
 
-SRC_DIR = src
-BUILD_DIR = build
-TARGET = $(BUILD_DIR)/blinky
+all:
+	@mkdir -p build
+	@cd build && cmake .. && $(MAKE) -j$$(nproc)
 
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
-OBJECTS = $(SOURCES:$(SRC_DIR)/%.cpp=$(BUILD_DIR)/%.o)
+agent:
+	@mkdir -p build
+	@cd build && cmake -DBUILD_COLLECTOR=OFF .. && $(MAKE) -j$$(nproc)
 
-.PHONY: all clean run
-
-all: $(TARGET)
-
-$(TARGET): $(OBJECTS) | $(BUILD_DIR)
-	$(CXX) $(OBJECTS) -o $(TARGET) $(LDFLAGS)
-
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
+collector:
+	@mkdir -p build
+	@cd build && cmake -DBUILD_AGENT=OFF .. && $(MAKE) -j$$(nproc)
 
 clean:
-	rm -rf $(BUILD_DIR)
+	@rm -rf build
 
-run: $(TARGET)
-	$(TARGET)
+install:
+	@./install.sh
+
+help:
+	@echo "Blinky Build System"
+	@echo "==================="
+	@echo ""
+	@echo "Targets:"
+	@echo "  all        - Build both agent and collector (default)"
+	@echo "  agent      - Build only the agent"
+	@echo "  collector  - Build only the collector"
+	@echo "  clean      - Remove build directory"
+	@echo "  install    - Install binaries (requires root)"
+	@echo "  help       - Show this help message"
+	@echo ""
+	@echo "After building, binaries are located in:"
+	@echo "  build/agent/blinky-agent"
+	@echo "  build/collector/blinky-collector"

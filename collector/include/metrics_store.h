@@ -12,10 +12,12 @@ namespace collector {
 
 struct HostMetricsHistory {
     std::string hostname;
+    std::string agent_version;
     metrics::SystemMetrics latest;
     std::deque<metrics::SystemMetrics> history;
     uint64_t last_update;
     bool online;
+    bool version_mismatch;
     
     static const size_t MAX_HISTORY = 1000;
 };
@@ -25,7 +27,7 @@ public:
     MetricsStore();
     ~MetricsStore();
     
-    void storeMetrics(const metrics::SystemMetrics& metrics);
+    void storeMetrics(const metrics::SystemMetrics& metrics, const std::string& agent_version);
     
     HostMetricsHistory getHostMetrics(const std::string& hostname) const;
     std::vector<std::string> getHostnames() const;

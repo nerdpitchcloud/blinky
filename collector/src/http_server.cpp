@@ -181,6 +181,11 @@ std::string HttpServer::generateDashboard() {
                 html << "<span class='status-offline'>● OFFLINE</span>";
             }
             html << "</h2>\n";
+            html << "<p style='color: #666; font-size: 0.9em;'>Agent Version: " << host.agent_version;
+            if (host.version_mismatch) {
+                html << " <span style='color: #f59e0b; font-weight: bold;'>⚠ Version Mismatch</span>";
+            }
+            html << "</p>\n";
             
             if (host.online) {
                 html << "<div class='metric'>\n";
@@ -269,7 +274,9 @@ std::string HttpServer::generateAPIResponse() {
         const auto& host = pair.second;
         json << "{";
         json << "\"hostname\":\"" << host.hostname << "\",";
+        json << "\"agent_version\":\"" << host.agent_version << "\",";
         json << "\"online\":" << (host.online ? "true" : "false") << ",";
+        json << "\"version_mismatch\":" << (host.version_mismatch ? "true" : "false") << ",";
         json << "\"metrics\":" << host.latest.toJSON();
         json << "}";
     }

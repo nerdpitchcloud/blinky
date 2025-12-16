@@ -1,4 +1,5 @@
 #include "metrics_store.h"
+#include "version.h"
 #include <ctime>
 #include <algorithm>
 
@@ -11,14 +12,19 @@ MetricsStore::MetricsStore() {
 MetricsStore::~MetricsStore() {
 }
 
-void MetricsStore::storeMetrics(const metrics::SystemMetrics& metrics) {
+void MetricsStore::storeMetrics(const metrics::SystemMetrics& metrics, const std::string& agent_version) {
     std::lock_guard<std::mutex> lock(mutex_);
     
     auto& host = hosts_[metrics.hostname];
     host.hostname = metrics.hostname;
+    host.agent_version = agent_version;
     host.latest = metrics;
     host.last_update = metrics.timestamp;
     host.online = true;
+    
+    version::Version collector_ver = version::Version::current();
+    version::Version agent_ver = version::Version::fromString(agent_version);
+    host.version_mismatch = !collector_ver.isCompatible(agent_ver);
     
     host.history.push_back(metrics);
     

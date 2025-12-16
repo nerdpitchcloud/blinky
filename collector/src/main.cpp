@@ -2,6 +2,7 @@
 #include "metrics_store.h"
 #include "http_server.h"
 #include "protocol.h"
+#include "version.h"
 #include <iostream>
 #include <csignal>
 #include <thread>
@@ -21,6 +22,7 @@ void printUsage(const char* program) {
     std::cout << "Usage: " << program << " [options]\n"
               << "Options:\n"
               << "  -h, --help              Show this help message\n"
+              << "  -v, --version           Show version information\n"
               << "  -w, --ws-port PORT      WebSocket port (default: 8080)\n"
               << "  -p, --http-port PORT    HTTP dashboard port (default: 8081)\n"
               << std::endl;
@@ -34,6 +36,9 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "-h" || arg == "--help") {
             printUsage(argv[0]);
+            return 0;
+        } else if (arg == "-v" || arg == "--version") {
+            std::cout << "Blinky Collector " << version::getFullVersionString() << std::endl;
             return 0;
         } else if ((arg == "-w" || arg == "--ws-port") && i + 1 < argc) {
             ws_port = std::atoi(argv[++i]);
@@ -49,7 +54,7 @@ int main(int argc, char* argv[]) {
     std::signal(SIGINT, signalHandler);
     std::signal(SIGTERM, signalHandler);
     
-    std::cout << "Blinky Collector v0.1.0" << std::endl;
+    std::cout << "Blinky Collector " << version::getFullVersionString() << std::endl;
     std::cout << "WebSocket server port: " << ws_port << std::endl;
     std::cout << "HTTP dashboard port: " << http_port << std::endl;
     
@@ -66,9 +71,10 @@ int main(int argc, char* argv[]) {
                 metrics.hostname = msg.hostname;
                 metrics.timestamp = msg.timestamp;
                 
-                store.storeMetrics(metrics);
+                store.storeMetrics(metrics, msg.version);
                 
                 std::cout << "Received metrics from " << msg.hostname 
+                          << " v" << msg.version
                           << " (CPU: " << metrics.cpu.usage_percent << "%)" << std::endl;
             }
         } catch (const std::exception& e) {

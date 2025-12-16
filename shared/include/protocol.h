@@ -20,6 +20,7 @@ struct Message {
     MessageType type;
     uint64_t timestamp;
     std::string hostname;
+    std::string version;
     std::string payload;
     
     std::string serialize() const;

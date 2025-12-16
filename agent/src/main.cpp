@@ -1,6 +1,7 @@
 #include "collector.h"
 #include "websocket_client.h"
 #include "protocol.h"
+#include "version.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -22,6 +23,7 @@ void printUsage(const char* program) {
     std::cout << "Usage: " << program << " [options]\n"
               << "Options:\n"
               << "  -h, --help              Show this help message\n"
+              << "  -v, --version           Show version information\n"
               << "  -s, --server HOST       Collector server host (default: localhost)\n"
               << "  -p, --port PORT         Collector server port (default: 8080)\n"
               << "  -i, --interval SECONDS  Collection interval (default: 5)\n"
@@ -37,6 +39,9 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if (arg == "-h" || arg == "--help") {
             printUsage(argv[0]);
+            return 0;
+        } else if (arg == "-v" || arg == "--version") {
+            std::cout << "Blinky Agent " << version::getFullVersionString() << std::endl;
             return 0;
         } else if ((arg == "-s" || arg == "--server") && i + 1 < argc) {
             server_host = argv[++i];
@@ -54,7 +59,7 @@ int main(int argc, char* argv[]) {
     std::signal(SIGINT, signalHandler);
     std::signal(SIGTERM, signalHandler);
     
-    std::cout << "Blinky Agent v0.1.0" << std::endl;
+    std::cout << "Blinky Agent " << version::getFullVersionString() << std::endl;
     std::cout << "Connecting to collector at " << server_host << ":" << server_port << std::endl;
     std::cout << "Collection interval: " << interval_seconds << " seconds" << std::endl;
     
@@ -85,6 +90,7 @@ int main(int argc, char* argv[]) {
         msg.type = protocol::MessageType::METRICS;
         msg.timestamp = metrics.timestamp;
         msg.hostname = metrics.hostname;
+        msg.version = version::getVersionString();
         msg.payload = metrics.toJSON();
         
         if (!ws_client.send(msg.serialize())) {

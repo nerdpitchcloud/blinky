@@ -20,23 +20,101 @@ Blinky is a lightweight, real-time monitoring system for Linux hosts, specifical
 - **REST API**: Programmatic access to metrics
 - **Visual Indicators**: Color-coded alerts for CPU, memory, and disk usage
 
+## Quick Install
+
+Install the agent on any Debian/Ubuntu host with a single command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash
+```
+
+Or download a specific version:
+```bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash -s v0.1.0
+```
+
+Then configure and start:
+```bash
+blinky-agent -s <collector-host> -p 8080 -i 5
+```
+
 ## Architecture
 
+```mermaid
+graph TB
+    subgraph "Monitored Hosts"
+        H1[Debian Host 1]
+        H2[Debian Host 2]
+        H3[Debian Host N]
+        
+        subgraph "Agent Components"
+            A1[Blinky Agent]
+            M1[CPU Monitor]
+            M2[Memory Monitor]
+            M3[Disk Monitor]
+            M4[SMART Monitor]
+            M5[Network Monitor]
+            M6[Systemd Monitor]
+            M7[Container Monitor]
+            M8[K8s Monitor]
+        end
+        
+        A1 --> M1
+        A1 --> M2
+        A1 --> M3
+        A1 --> M4
+        A1 --> M5
+        A1 --> M6
+        A1 --> M7
+        A1 --> M8
+    end
+    
+    subgraph "Collector Server"
+        WS[WebSocket Server<br/>Port 8080]
+        HTTP[HTTP Server<br/>Port 8081]
+        STORE[Metrics Store<br/>Historical Data]
+        DASH[Web Dashboard]
+        API[REST API]
+        
+        WS --> STORE
+        HTTP --> DASH
+        HTTP --> API
+        STORE --> DASH
+        STORE --> API
+    end
+    
+    A1 -->|Real-time Metrics<br/>WebSocket| WS
+    H2 -.->|WebSocket| WS
+    H3 -.->|WebSocket| WS
+    
+    USER[User Browser] -->|HTTP| HTTP
+    EXTERNAL[External Tools] -->|HTTP API| API
+    
+    style A1 fill:#3b82f6
+    style WS fill:#22c55e
+    style HTTP fill:#22c55e
+    style DASH fill:#f59e0b
+    style API fill:#f59e0b
 ```
-┌─────────────────┐         WebSocket          ┌──────────────────┐
-│  Debian Host 1  │         (Port 8080)         │                  │
-│  ┌───────────┐  │─────────────────────────────│   Collector      │
-│  │  Agent    │  │                             │                  │
-│  └───────────┘  │                             │  ┌────────────┐  │
-└─────────────────┘                             │  │ Dashboard  │  │
-                                                │  │ (Port 8081)│  │
-┌─────────────────┐                             │  └────────────┘  │
-│  Debian Host 2  │                             │                  │
-│  ┌───────────┐  │─────────────────────────────│  ┌────────────┐  │
-│  │  Agent    │  │                             │  │ REST API   │  │
-│  └───────────┘  │                             │  └────────────┘  │
-└─────────────────┘                             └──────────────────┘
-```
+
+## Releases
+
+Blinky follows [Semantic Versioning](https://semver.org/) (SemVer):
+- **Major version** (X.0.0): Breaking changes
+- **Minor version** (0.X.0): New features, backward compatible
+- **Patch version** (0.0.X): Bug fixes, backward compatible
+
+### Available Downloads
+
+Pre-built binaries are available for:
+- **Linux AMD64** (x86_64)
+- **Linux ARM64** (aarch64)
+
+Download the latest release from [GitHub Releases](https://github.com/nerdpitchcloud/blinky/releases).
+
+### Version Tracking
+
+The collector automatically tracks agent versions and displays warnings when version mismatches are detected. This helps ensure compatibility across your infrastructure.
 
 ## Building
 

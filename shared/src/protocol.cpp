@@ -10,6 +10,7 @@ std::string Message::serialize() const {
     oss << static_cast<int>(type) << "|"
         << timestamp << "|"
         << hostname << "|"
+        << version << "|"
         << payload;
     return oss.str();
 }
@@ -26,6 +27,7 @@ Message Message::deserialize(const std::string& data) {
     msg.timestamp = std::stoull(token);
     
     std::getline(iss, msg.hostname, '|');
+    std::getline(iss, msg.version, '|');
     std::getline(iss, msg.payload);
     
     return msg;

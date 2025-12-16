@@ -40,61 +40,144 @@ blinky-agent -s <collector-host> -p 8080 -i 5
 
 ## Architecture
 
+### System Overview
+
+```mermaid
+graph LR
+    A[Monitored Hosts<br/>with Agents] -->|WebSocket<br/>Port 8080| C[Collector<br/>Server]
+    C -->|HTTP<br/>Port 8081| U[Users &<br/>Tools]
+    
+    style A fill:#3b82f6,color:#fff
+    style C fill:#22c55e,color:#fff
+    style U fill:#f59e0b,color:#fff
+```
+
+### Agent Architecture
+
 ```mermaid
 graph TB
-    subgraph "Monitored Hosts"
-        H1[Debian Host 1]
-        H2[Debian Host 2]
-        H3[Debian Host N]
-        
-        subgraph "Agent Components"
-            A1[Blinky Agent]
-            M1[CPU Monitor]
-            M2[Memory Monitor]
-            M3[Disk Monitor]
-            M4[SMART Monitor]
-            M5[Network Monitor]
-            M6[Systemd Monitor]
-            M7[Container Monitor]
-            M8[K8s Monitor]
+    Agent[Blinky Agent]
+    
+    Agent --> CPU[CPU Monitor<br/>Usage, Load Average]
+    Agent --> MEM[Memory Monitor<br/>Usage, Available]
+    Agent --> DISK[Disk Monitor<br/>Usage, Mount Points]
+    Agent --> SMART[SMART Monitor<br/>Disk Health]
+    Agent --> NET[Network Monitor<br/>Traffic, Errors]
+    Agent --> SYS[Systemd Monitor<br/>Service Status]
+    Agent --> CONT[Container Monitor<br/>Docker, Podman]
+    Agent --> K8S[Kubernetes Monitor<br/>Pods, Nodes]
+    
+    CPU --> WS[WebSocket Client]
+    MEM --> WS
+    DISK --> WS
+    SMART --> WS
+    NET --> WS
+    SYS --> WS
+    CONT --> WS
+    K8S --> WS
+    
+    WS -->|Send Metrics| COLLECTOR[Collector Server]
+    
+    style Agent fill:#3b82f6,color:#fff
+    style WS fill:#8b5cf6,color:#fff
+    style COLLECTOR fill:#22c55e,color:#fff
+```
+
+### Collector Architecture
+
+```mermaid
+graph TB
+    WS[WebSocket Server<br/>Port 8080]
+    HTTP[HTTP Server<br/>Port 8081]
+    
+    WS -->|Receive Metrics| STORE[Metrics Store]
+    STORE -->|Historical Data<br/>Max 1000 entries| STORE
+    
+    HTTP --> DASH[Web Dashboard<br/>Live Monitoring]
+    HTTP --> API[REST API<br/>/api/metrics]
+    
+    STORE --> DASH
+    STORE --> API
+    
+    DASH -->|Auto-refresh<br/>Every 5s| BROWSER[User Browser]
+    API -->|JSON Response| TOOLS[External Tools]
+    
+    style WS fill:#22c55e,color:#fff
+    style HTTP fill:#22c55e,color:#fff
+    style STORE fill:#3b82f6,color:#fff
+    style DASH fill:#f59e0b,color:#fff
+    style API fill:#f59e0b,color:#fff
+```
+
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant WebSocket
+    participant Store
+    participant Dashboard
+    participant User
+    
+    Agent->>WebSocket: Connect
+    WebSocket-->>Agent: Connected
+    
+    loop Every 5 seconds
+        Agent->>Agent: Collect Metrics
+        Agent->>WebSocket: Send Metrics + Version
+        WebSocket->>Store: Store Metrics
+        Store->>Store: Check Version Compatibility
+        Store->>Store: Update Historical Data
+    end
+    
+    User->>Dashboard: Open Browser
+    Dashboard->>Store: Request Metrics
+    Store-->>Dashboard: Return Latest Metrics
+    Dashboard-->>User: Display Live Data
+    
+    Note over Dashboard,User: Auto-refresh every 5s
+```
+
+### Deployment Topology
+
+```mermaid
+graph TB
+    subgraph "Production Environment"
+        subgraph "Web Servers"
+            W1[web-01<br/>Agent]
+            W2[web-02<br/>Agent]
+            W3[web-03<br/>Agent]
         end
         
-        A1 --> M1
-        A1 --> M2
-        A1 --> M3
-        A1 --> M4
-        A1 --> M5
-        A1 --> M6
-        A1 --> M7
-        A1 --> M8
-    end
-    
-    subgraph "Collector Server"
-        WS[WebSocket Server<br/>Port 8080]
-        HTTP[HTTP Server<br/>Port 8081]
-        STORE[Metrics Store<br/>Historical Data]
-        DASH[Web Dashboard]
-        API[REST API]
+        subgraph "Database Servers"
+            D1[db-01<br/>Agent]
+            D2[db-02<br/>Agent]
+        end
         
-        WS --> STORE
-        HTTP --> DASH
-        HTTP --> API
-        STORE --> DASH
-        STORE --> API
+        subgraph "Kubernetes Cluster"
+            K1[k8s-master<br/>Agent]
+            K2[k8s-node-01<br/>Agent]
+            K3[k8s-node-02<br/>Agent]
+        end
+        
+        subgraph "Monitoring Server"
+            COL[Collector<br/>Port 8080/8081]
+        end
     end
     
-    A1 -->|Real-time Metrics<br/>WebSocket| WS
-    H2 -.->|WebSocket| WS
-    H3 -.->|WebSocket| WS
+    W1 -.->|WebSocket| COL
+    W2 -.->|WebSocket| COL
+    W3 -.->|WebSocket| COL
+    D1 -.->|WebSocket| COL
+    D2 -.->|WebSocket| COL
+    K1 -.->|WebSocket| COL
+    K2 -.->|WebSocket| COL
+    K3 -.->|WebSocket| COL
     
-    USER[User Browser] -->|HTTP| HTTP
-    EXTERNAL[External Tools] -->|HTTP API| API
+    COL -->|Dashboard| ADMIN[Admin Browser]
     
-    style A1 fill:#3b82f6
-    style WS fill:#22c55e
-    style HTTP fill:#22c55e
-    style DASH fill:#f59e0b
-    style API fill:#f59e0b
+    style COL fill:#22c55e,color:#fff
+    style ADMIN fill:#f59e0b,color:#fff
 ```
 
 ## Releases

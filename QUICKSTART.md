@@ -2,37 +2,14 @@
 
 Get up and running with Blinky in 5 minutes!
 
-## Quick Installation (Recommended)
+## Quick Installation
 
-### 1. Install the Collector
-
-On your monitoring server:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-collector.sh | sudo bash
-```
-
-Start the collector:
-```bash
-blinky-collector -w 9090 -p 9091
-```
-
-You should see:
-```
-Blinky Collector v0.1.1
-WebSocket server port: 9090
-HTTP dashboard port: 9091
-
-Collector is running...
-Dashboard available at: http://localhost:9091/
-```
-
-### 2. Install the Agent
+### 1. Install the Agent
 
 On each host you want to monitor:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash
 ```
 
 The installer automatically:
@@ -54,6 +31,26 @@ Collection interval: 5 seconds
 Attempting to connect to collector...
 Connected to collector
 Metrics sent successfully
+```
+
+### 2. Run the Collector (Docker)
+
+On your monitoring server, create a `docker-compose.yml`:
+
+```yaml
+version: '3.8'
+services:
+  blinky-collector:
+    image: ghcr.io/nerdpitchcloud/blinky-collector:latest
+    ports:
+      - "9090:9090"  # WebSocket
+      - "9091:9091"  # Dashboard
+    restart: unless-stopped
+```
+
+Start the collector:
+```bash
+docker-compose up -d
 ```
 
 ### 3. View the Dashboard

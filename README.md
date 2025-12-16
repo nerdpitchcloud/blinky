@@ -4,12 +4,10 @@ Blinky is a lightweight, real-time monitoring system for Linux hosts, specifical
 
 ## Quick Install
 
-### Agent Installation
-
 Install the agent on any Debian/Ubuntu host (AMD64 or ARM64):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash
 ```
 
 The installer automatically:
@@ -20,28 +18,18 @@ The installer automatically:
 
 Or install a specific version:
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash -s v0.1.0
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash -s v0.1.0
 ```
 
-### Collector Installation
+### Start the Agent
 
-Install the collector server:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-collector.sh | sudo bash
-```
-
-### Configure and Start
-
-Start the agent:
 ```bash
 blinky-agent -s <collector-host> -p 9090 -i 5
 ```
 
-Start the collector:
-```bash
-blinky-collector -w 9090 -p 9091
-```
+### Collector (Docker)
+
+The collector runs in a Docker container. See the deployment section below for Docker Compose configuration.
 
 ## Architecture
 

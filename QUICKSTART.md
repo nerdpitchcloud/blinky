@@ -2,38 +2,24 @@
 
 Get up and running with Blinky in 5 minutes!
 
-## Prerequisites
+## Quick Installation (Recommended)
 
-On Debian/Ubuntu systems:
-```bash
-sudo apt-get update
-sudo apt-get install -y build-essential cmake libssl-dev git
-```
-
-## Installation
-
-### 1. Clone and Build
-
-```bash
-git clone https://github.com/nerdpitchcloud/blinky.git
-cd blinky
-make
-```
-
-This will build both the agent and collector.
-
-### 2. Start the Collector
+### 1. Install the Collector
 
 On your monitoring server:
 
 ```bash
-cd build
-./collector/blinky-collector
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-collector.sh | sudo bash
+```
+
+Start the collector:
+```bash
+blinky-collector -w 9090 -p 9091
 ```
 
 You should see:
 ```
-Blinky Collector v0.1.0
+Blinky Collector v0.1.1
 WebSocket server port: 9090
 HTTP dashboard port: 9091
 
@@ -41,19 +27,28 @@ Collector is running...
 Dashboard available at: http://localhost:9091/
 ```
 
-### 3. Start the Agent
+### 2. Install the Agent
 
-On the same machine (for testing) or on remote hosts:
+On each host you want to monitor:
 
 ```bash
-cd build
-./agent/blinky-agent -s localhost -p 9090
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash
+```
+
+The installer automatically:
+- Detects your architecture (AMD64/ARM64)
+- Downloads pre-built binaries for AMD64
+- Builds from source for ARM64
+
+Start the agent:
+```bash
+blinky-agent -s <collector-ip> -p 9090 -i 5
 ```
 
 You should see:
 ```
-Blinky Agent v0.1.0
-Connecting to collector at localhost:9090
+Blinky Agent v0.1.1
+Connecting to collector at <collector-ip>:9090
 Collection interval: 5 seconds
 
 Attempting to connect to collector...
@@ -61,72 +56,80 @@ Connected to collector
 Metrics sent successfully
 ```
 
-### 4. View the Dashboard
+### 3. View the Dashboard
 
 Open your browser and navigate to:
 ```
-http://localhost:9091/
+http://<collector-ip>:9091/
 ```
 
 You should see your host with real-time metrics!
 
-## Testing on Multiple Hosts
+## Alternative: Build from Source
 
-### On the Collector Host
+If you prefer to build from source:
 
-1. Start the collector:
 ```bash
-./collector/blinky-collector -w 9090 -p 9091
+git clone https://github.com/nerdpitchcloud/blinky.git
+cd blinky
+make
 ```
 
-2. Note the IP address:
+Then run the binaries from the build directory:
 ```bash
-ip addr show
+./build/collector/blinky-collector -w 9090 -p 9091
+./build/agent/blinky-agent -s <collector-ip> -p 9090 -i 5
 ```
 
-### On Each Monitored Host
+## Running as a Service
 
-1. Copy the agent binary:
-```bash
-scp build/agent/blinky-agent user@remote-host:/tmp/
+### Collector Service
+
+Create `/etc/systemd/system/blinky-collector.service`:
+
+```ini
+[Unit]
+Description=Blinky Collector
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/blinky-collector -w 9090 -p 9091
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-2. SSH to the remote host and run:
+Enable and start:
 ```bash
-/tmp/blinky-agent -s <collector-ip> -p 9090 -i 5
-```
-
-3. Check the dashboard - you should see the new host appear!
-
-## Installing as a Service
-
-### Install the Collector
-
-On your monitoring server:
-```bash
-sudo ./install.sh collector
 sudo systemctl daemon-reload
 sudo systemctl enable blinky-collector
 sudo systemctl start blinky-collector
 sudo systemctl status blinky-collector
 ```
 
-### Install the Agent
+### Agent Service
 
-On each monitored host:
+Create `/etc/systemd/system/blinky-agent.service`:
 
-1. Edit the service file to point to your collector:
-```bash
-sudo ./install.sh agent
-sudo nano /etc/systemd/system/blinky-agent.service
-```
+```ini
+[Unit]
+Description=Blinky Agent
+After=network.target
 
-2. Change the ExecStart line:
-```
+[Service]
+Type=simple
 ExecStart=/usr/local/bin/blinky-agent -s <collector-ip> -p 9090 -i 5
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
 ```
 
-3. Start the service:
+Enable and start:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl enable blinky-agent

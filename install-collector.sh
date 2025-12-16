@@ -3,7 +3,7 @@ set -e
 
 REPO="nerdpitchcloud/blinky"
 INSTALL_DIR="/usr/local/bin"
-BINARY_NAME="blinky-agent"
+BINARY_NAME="blinky-collector"
 
 detect_arch() {
     local arch=$(uname -m)
@@ -39,9 +39,9 @@ install_from_binary() {
     local download_url
     if [ "$version" = "latest" ]; then
         echo "Fetching latest release information..."
-        download_url=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep "browser_download_url.*blinky-agent.*linux-$arch.tar.gz" | cut -d '"' -f 4)
+        download_url=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep "browser_download_url.*blinky-collector.*linux-$arch.tar.gz" | cut -d '"' -f 4)
     else
-        download_url="https://github.com/$REPO/releases/download/$version/blinky-agent-${version#v}-linux-$arch.tar.gz"
+        download_url="https://github.com/$REPO/releases/download/$version/blinky-collector-${version#v}-linux-$arch.tar.gz"
     fi
     
     if [ -z "$download_url" ]; then
@@ -53,23 +53,23 @@ install_from_binary() {
     local tmp_dir=$(mktemp -d)
     cd $tmp_dir
     
-    if ! curl -L -f -o blinky-agent.tar.gz "$download_url" 2>/dev/null; then
+    if ! curl -L -f -o blinky-collector.tar.gz "$download_url" 2>/dev/null; then
         rm -rf $tmp_dir
         return 1
     fi
     
     echo "Extracting archive..."
-    tar -xzf blinky-agent.tar.gz
+    tar -xzf blinky-collector.tar.gz
     
-    if [ ! -f "blinky-agent" ]; then
+    if [ ! -f "blinky-collector" ]; then
         echo "Error: Binary not found in archive"
         rm -rf $tmp_dir
         return 1
     fi
     
     echo "Installing to $INSTALL_DIR..."
-    mv blinky-agent $INSTALL_DIR/
-    chmod +x $INSTALL_DIR/blinky-agent
+    mv blinky-collector $INSTALL_DIR/
+    chmod +x $INSTALL_DIR/blinky-collector
     
     rm -rf $tmp_dir
     return 0
@@ -105,7 +105,7 @@ install_from_source() {
     cmake -DCMAKE_BUILD_TYPE=Release .. > /dev/null
     make -j$(nproc)
     
-    if [ ! -f "agent/blinky-agent" ]; then
+    if [ ! -f "collector/blinky-collector" ]; then
         echo "Error: Build failed - binary not found"
         cd /
         rm -rf $tmp_dir
@@ -114,8 +114,8 @@ install_from_source() {
     
     echo ""
     echo "Installing to $INSTALL_DIR..."
-    cp agent/blinky-agent $INSTALL_DIR/
-    chmod +x $INSTALL_DIR/blinky-agent
+    cp collector/blinky-collector $INSTALL_DIR/
+    chmod +x $INSTALL_DIR/blinky-collector
     
     cd /
     rm -rf $tmp_dir
@@ -124,8 +124,8 @@ install_from_source() {
 ARCH=$(detect_arch)
 OS=$(detect_os)
 
-echo "Blinky Agent Installer"
-echo "====================="
+echo "Blinky Collector Installer"
+echo "=========================="
 echo ""
 echo "Detected OS: $OS"
 echo "Detected architecture: $ARCH"
@@ -176,9 +176,9 @@ fi
 
 echo ""
 echo "Installed version:"
-$INSTALL_DIR/blinky-agent --version
+$INSTALL_DIR/blinky-collector --version
 echo ""
-echo "To run the agent:"
-echo "  blinky-agent -s <collector-host> -p 9090"
+echo "To run the collector:"
+echo "  blinky-collector -w 9090 -p 9091"
 echo ""
 echo "For more information visit: https://github.com/$REPO"

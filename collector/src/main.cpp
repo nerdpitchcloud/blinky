@@ -23,14 +23,14 @@ void printUsage(const char* program) {
               << "Options:\n"
               << "  -h, --help              Show this help message\n"
               << "  -v, --version           Show version information\n"
-              << "  -w, --ws-port PORT      WebSocket port (default: 8080)\n"
-              << "  -p, --http-port PORT    HTTP dashboard port (default: 8081)\n"
+              << "  -w, --ws-port PORT      WebSocket port (default: 9090)\n"
+              << "  -p, --http-port PORT    HTTP dashboard port (default: 9091)\n"
               << std::endl;
 }
 
 int main(int argc, char* argv[]) {
-    int ws_port = 8080;
-    int http_port = 8081;
+    int ws_port = 9090;
+    int http_port = 9091;
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];

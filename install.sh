@@ -55,7 +55,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$INSTALL_DIR/blinky-agent -s localhost -p 8080 -i 5
+ExecStart=$INSTALL_DIR/blinky-agent -s localhost -p 9090 -i 5
 Restart=always
 RestartSec=10
 
@@ -92,7 +92,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=$INSTALL_DIR/blinky-collector -w 8080 -p 8081
+ExecStart=$INSTALL_DIR/blinky-collector -w 9090 -p 9091
 Restart=always
 RestartSec=10
 
@@ -107,7 +107,7 @@ EOF
     echo "  systemctl enable blinky-collector"
     echo "  systemctl start blinky-collector"
     echo ""
-    echo "Dashboard will be available at: http://localhost:8081/"
+    echo "Dashboard will be available at: http://localhost:9091/"
     echo ""
 }
 

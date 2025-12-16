@@ -102,6 +102,6 @@ echo "Installed version:"
 $INSTALL_DIR/blinky-agent --version
 echo ""
 echo "To run the agent:"
-echo "  blinky-agent -s <collector-host> -p 8080"
+echo "  blinky-agent -s <collector-host> -p 9090"
 echo ""
 echo "For more information visit: https://github.com/$REPO"

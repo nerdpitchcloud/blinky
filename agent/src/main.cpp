@@ -25,14 +25,14 @@ void printUsage(const char* program) {
               << "  -h, --help              Show this help message\n"
               << "  -v, --version           Show version information\n"
               << "  -s, --server HOST       Collector server host (default: localhost)\n"
-              << "  -p, --port PORT         Collector server port (default: 8080)\n"
+              << "  -p, --port PORT         Collector server port (default: 9090)\n"
               << "  -i, --interval SECONDS  Collection interval (default: 5)\n"
               << std::endl;
 }
 
 int main(int argc, char* argv[]) {
     std::string server_host = "localhost";
-    int server_port = 8080;
+    int server_port = 9090;
     int interval_seconds = 5;
     
     for (int i = 1; i < argc; ++i) {

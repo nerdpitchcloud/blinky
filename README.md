@@ -17,7 +17,7 @@ curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-
 
 Then configure and start:
 ```bash
-blinky-agent -s <collector-host> -p 8080 -i 5
+blinky-agent -s <collector-host> -p 9090 -i 5
 ```
 
 ## Architecture
@@ -26,8 +26,8 @@ blinky-agent -s <collector-host> -p 8080 -i 5
 
 ```mermaid
 graph LR
-    A[Monitored Hosts<br/>with Agents] -->|WebSocket<br/>Port 8080| C[Collector<br/>Server]
-    C -->|HTTP<br/>Port 8081| U[Users &<br/>Tools]
+    A[Monitored Hosts<br/>with Agents] -->|WebSocket<br/>Port 9090| C[Collector<br/>Server]
+    C -->|HTTP<br/>Port 9091| U[Users &<br/>Tools]
     
     style A fill:#3b82f6,color:#fff
     style C fill:#22c55e,color:#fff
@@ -69,8 +69,8 @@ graph TB
 
 ```mermaid
 graph TB
-    WS[WebSocket Server<br/>Port 8080]
-    HTTP[HTTP Server<br/>Port 8081]
+    WS[WebSocket Server<br/>Port 9090]
+    HTTP[HTTP Server<br/>Port 9091]
     
     WS -->|Receive Metrics| STORE[Metrics Store]
     STORE -->|Historical Data<br/>Max 1000 entries| STORE
@@ -143,7 +143,7 @@ graph TB
         end
         
         subgraph "Monitoring Server"
-            COL[Collector<br/>Port 8080/8081]
+            COL[Collector<br/>Port 9090/9091]
         end
     end
     
@@ -213,43 +213,43 @@ Start the collector server on your monitoring host:
 ```
 
 Options:
-- `-w, --ws-port PORT` - WebSocket port (default: 8080)
-- `-p, --http-port PORT` - HTTP dashboard port (default: 8081)
+- `-w, --ws-port PORT` - WebSocket port (default: 9090)
+- `-p, --http-port PORT` - HTTP dashboard port (default: 9091)
 
-The dashboard will be available at `http://localhost:8081/`
+The dashboard will be available at `http://localhost:9091/`
 
 ### Running the Agent
 
 On each host you want to monitor:
 
 ```bash
-./agent/blinky-agent -s <collector-host> -p 8080
+./agent/blinky-agent -s <collector-host> -p 9090
 ```
 
 Options:
 - `-s, --server HOST` - Collector server hostname/IP (default: localhost)
-- `-p, --port PORT` - Collector WebSocket port (default: 8080)
+- `-p, --port PORT` - Collector WebSocket port (default: 9090)
 - `-i, --interval SECONDS` - Metrics collection interval (default: 5)
 
 ### Example Setup
 
 1. Start collector on monitoring server:
 ```bash
-./collector/blinky-collector -w 8080 -p 8081
+./collector/blinky-collector -w 9090 -p 9091
 ```
 
 2. Start agents on monitored hosts:
 ```bash
 # On host1
-./agent/blinky-agent -s monitoring.example.com -p 8080 -i 5
+./agent/blinky-agent -s monitoring.example.com -p 9090 -i 5
 
 # On host2
-./agent/blinky-agent -s monitoring.example.com -p 8080 -i 5
+./agent/blinky-agent -s monitoring.example.com -p 9090 -i 5
 ```
 
 3. Open dashboard in browser:
 ```
-http://monitoring.example.com:8081/
+http://monitoring.example.com:9091/
 ```
 
 ### Monitoring Tools
@@ -259,7 +259,7 @@ http://monitoring.example.com:8081/
 Monitor all hosts in real-time with a live updating terminal interface:
 
 ```bash
-./blinky-monitor.py http://localhost:8081/api/metrics
+./blinky-monitor.py http://localhost:9091/api/metrics
 ```
 
 Features:
@@ -275,7 +275,7 @@ Features:
 Get a quick snapshot of all hosts:
 
 ```bash
-./blinky-check.sh http://localhost:8081/api/metrics
+./blinky-check.sh http://localhost:9091/api/metrics
 ```
 
 This provides a one-time status check without live updates, useful for scripts and automation.

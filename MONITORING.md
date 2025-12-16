@@ -24,14 +24,14 @@ A real-time monitoring tool that displays all metrics in a btop-style interface 
 **Examples:**
 ```bash
 # Monitor localhost collector
-./blinky-monitor.py http://localhost:8081/api/metrics
+./blinky-monitor.py http://localhost:9091/api/metrics
 
 # Monitor remote collector
-./blinky-monitor.py http://monitoring.example.com:8081/api/metrics
+./blinky-monitor.py http://monitoring.example.com:9091/api/metrics
 
 # Short form (auto-adds http and /api/metrics)
-./blinky-monitor.py localhost:8081
-./blinky-monitor.py monitoring.example.com:8081
+./blinky-monitor.py localhost:9091
+./blinky-monitor.py monitoring.example.com:9091
 ```
 
 **Controls:**
@@ -105,13 +105,13 @@ A simple one-time status check tool for quick verification or scripting.
 **Examples:**
 ```bash
 # Check localhost collector
-./blinky-check.sh http://localhost:8081/api/metrics
+./blinky-check.sh http://localhost:9091/api/metrics
 
 # Check remote collector
-./blinky-check.sh monitoring.example.com:8081
+./blinky-check.sh monitoring.example.com:9091
 
 # Use in scripts
-if ./blinky-check.sh localhost:8081 > /dev/null 2>&1; then
+if ./blinky-check.sh localhost:9091 > /dev/null 2>&1; then
     echo "Collector is healthy"
 else
     echo "Collector has issues"
@@ -120,7 +120,7 @@ fi
 
 **Output Example:**
 ```
-Checking Blinky Collector: http://localhost:8081/api/metrics
+Checking Blinky Collector: http://localhost:9091/api/metrics
 
 Total Hosts: 2
 
@@ -173,8 +173,8 @@ ERROR: Failed to connect to collector
 **Solutions:**
 - Verify the collector is running
 - Check the URL and port are correct
-- Ensure firewall allows connections to port 8081
-- Try: `curl http://localhost:8081/api/metrics`
+- Ensure firewall allows connections to port 9091
+- Try: `curl http://localhost:9091/api/metrics`
 
 ### Empty Response
 ```
@@ -204,8 +204,8 @@ ERROR: Invalid JSON response
 # Check all collectors and alert if any are down
 
 COLLECTORS=(
-    "http://collector1.example.com:8081/api/metrics"
-    "http://collector2.example.com:8081/api/metrics"
+    "http://collector1.example.com:9091/api/metrics"
+    "http://collector2.example.com:9091/api/metrics"
 )
 
 for collector in "${COLLECTORS[@]}"; do
@@ -219,7 +219,7 @@ done
 ### Cron Job
 ```bash
 # Check collector health every 5 minutes
-*/5 * * * * /opt/blinky/blinky-check.sh http://localhost:8081/api/metrics || /usr/local/bin/alert-admin.sh
+*/5 * * * * /opt/blinky/blinky-check.sh http://localhost:9091/api/metrics || /usr/local/bin/alert-admin.sh
 ```
 
 ### Systemd Service Health Check
@@ -230,7 +230,7 @@ After=blinky-collector.service
 
 [Service]
 Type=oneshot
-ExecStart=/opt/blinky/blinky-check.sh http://localhost:8081/api/metrics
+ExecStart=/opt/blinky/blinky-check.sh http://localhost:9091/api/metrics
 
 [Install]
 WantedBy=multi-user.target
@@ -241,7 +241,7 @@ WantedBy=multi-user.target
 1. **Use tmux/screen** for persistent monitoring:
    ```bash
    tmux new -s blinky-monitor
-   ./blinky-monitor.py http://collector:8081/api/metrics
+   ./blinky-monitor.py http://collector:9091/api/metrics
    # Detach with Ctrl+B, D
    ```
 
@@ -250,12 +250,12 @@ WantedBy=multi-user.target
 3. **Pipe to log files** for historical tracking:
    ```bash
    while true; do
-       ./blinky-check.sh localhost:8081 >> /var/log/blinky-checks.log
+       ./blinky-check.sh localhost:9091 >> /var/log/blinky-checks.log
        sleep 300
    done
    ```
 
 4. **Use with watch** for periodic checks:
    ```bash
-   watch -n 5 -c './blinky-check.sh localhost:8081'
+   watch -n 5 -c './blinky-check.sh localhost:9091'
    ```

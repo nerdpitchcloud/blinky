@@ -1,6 +1,6 @@
 #!/bin/bash
 
-COLLECTOR_URL="${1:-http://localhost:8081/api/metrics}"
+COLLECTOR_URL="${1:-http://localhost:9091/api/metrics}"
 
 if [[ ! "$COLLECTOR_URL" =~ ^http ]]; then
     COLLECTOR_URL="http://$COLLECTOR_URL"

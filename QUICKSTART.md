@@ -34,11 +34,11 @@ cd build
 You should see:
 ```
 Blinky Collector v0.1.0
-WebSocket server port: 8080
-HTTP dashboard port: 8081
+WebSocket server port: 9090
+HTTP dashboard port: 9091
 
 Collector is running...
-Dashboard available at: http://localhost:8081/
+Dashboard available at: http://localhost:9091/
 ```
 
 ### 3. Start the Agent
@@ -47,13 +47,13 @@ On the same machine (for testing) or on remote hosts:
 
 ```bash
 cd build
-./agent/blinky-agent -s localhost -p 8080
+./agent/blinky-agent -s localhost -p 9090
 ```
 
 You should see:
 ```
 Blinky Agent v0.1.0
-Connecting to collector at localhost:8080
+Connecting to collector at localhost:9090
 Collection interval: 5 seconds
 
 Attempting to connect to collector...
@@ -65,7 +65,7 @@ Metrics sent successfully
 
 Open your browser and navigate to:
 ```
-http://localhost:8081/
+http://localhost:9091/
 ```
 
 You should see your host with real-time metrics!
@@ -76,7 +76,7 @@ You should see your host with real-time metrics!
 
 1. Start the collector:
 ```bash
-./collector/blinky-collector -w 8080 -p 8081
+./collector/blinky-collector -w 9090 -p 9091
 ```
 
 2. Note the IP address:
@@ -93,7 +93,7 @@ scp build/agent/blinky-agent user@remote-host:/tmp/
 
 2. SSH to the remote host and run:
 ```bash
-/tmp/blinky-agent -s <collector-ip> -p 8080 -i 5
+/tmp/blinky-agent -s <collector-ip> -p 9090 -i 5
 ```
 
 3. Check the dashboard - you should see the new host appear!
@@ -123,7 +123,7 @@ sudo nano /etc/systemd/system/blinky-agent.service
 
 2. Change the ExecStart line:
 ```
-ExecStart=/usr/local/bin/blinky-agent -s <collector-ip> -p 8080 -i 5
+ExecStart=/usr/local/bin/blinky-agent -s <collector-ip> -p 9090 -i 5
 ```
 
 3. Start the service:
@@ -152,8 +152,8 @@ Once running, Blinky will automatically monitor:
 
 Check firewall rules:
 ```bash
-sudo ufw allow 8080/tcp
-sudo ufw allow 8081/tcp
+sudo ufw allow 9090/tcp
+sudo ufw allow 9091/tcp
 ```
 
 ### Dashboard shows "No hosts connected"
@@ -193,7 +193,7 @@ Or run the agent as root (for systemd services, it runs as root by default).
 
 - Configure collection intervals with `-i` flag
 - Set up multiple agents across your infrastructure
-- Access metrics via REST API at `http://collector:8081/api/metrics`
+- Access metrics via REST API at `http://collector:9091/api/metrics`
 - Customize the dashboard (see docs/CUSTOMIZATION.md)
 
 ## Getting Help

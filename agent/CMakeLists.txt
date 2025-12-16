@@ -16,7 +16,11 @@ target_include_directories(blinky-agent PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+find_package(OpenSSL REQUIRED)
+
 target_link_libraries(blinky-agent PRIVATE
     blinky_shared
     pthread
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )

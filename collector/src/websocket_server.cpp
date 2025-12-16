@@ -5,6 +5,7 @@
 #include <cstring>
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 #include <openssl/sha.h>
 #include <openssl/bio.h>
 #include <openssl/evp.h>

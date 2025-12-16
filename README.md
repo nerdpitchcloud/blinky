@@ -21,9 +21,28 @@ Or install a specific version:
 curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash -s v0.1.0
 ```
 
+## Configuration
+
+After installation, configure the agent by editing `/etc/blinky/config.toml`:
+
+```toml
+[collector]
+host = "your-collector-host"
+port = 9090
+
+[agent]
+interval = 5
+```
+
+See [config.toml.example](config.toml.example) for all available options.
+
 ### Start the Agent
 
 ```bash
+# Using config file
+blinky-agent
+
+# Or override with command line
 blinky-agent -s <collector-host> -p 9090 -i 5
 ```
 

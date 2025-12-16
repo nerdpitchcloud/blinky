@@ -2,6 +2,7 @@
 #include "websocket_client.h"
 #include "protocol.h"
 #include "version.h"
+#include "config.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -24,16 +25,24 @@ void printUsage(const char* program) {
               << "Options:\n"
               << "  -h, --help              Show this help message\n"
               << "  -v, --version           Show version information\n"
-              << "  -s, --server HOST       Collector server host (default: localhost)\n"
-              << "  -p, --port PORT         Collector server port (default: 9090)\n"
-              << "  -i, --interval SECONDS  Collection interval (default: 5)\n"
+              << "  -c, --config FILE       Config file path (default: auto-detect)\n"
+              << "  -s, --server HOST       Collector server host (overrides config)\n"
+              << "  -p, --port PORT         Collector server port (overrides config)\n"
+              << "  -i, --interval SECONDS  Collection interval (overrides config)\n"
+              << "\n"
+              << "Config file locations (in order of precedence):\n"
+              << "  /etc/blinky/config.toml\n"
+              << "  ~/.blinky/config.toml\n"
+              << "  ./config.toml\n"
               << std::endl;
 }
 
 int main(int argc, char* argv[]) {
-    std::string server_host = "localhost";
-    int server_port = 9090;
-    int interval_seconds = 5;
+    Config config;
+    std::string config_file;
+    std::string server_host_override;
+    int server_port_override = -1;
+    int interval_override = -1;
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -43,18 +52,46 @@ int main(int argc, char* argv[]) {
         } else if (arg == "-v" || arg == "--version") {
             std::cout << "Blinky Agent " << version::getFullVersionString() << std::endl;
             return 0;
+        } else if ((arg == "-c" || arg == "--config") && i + 1 < argc) {
+            config_file = argv[++i];
         } else if ((arg == "-s" || arg == "--server") && i + 1 < argc) {
-            server_host = argv[++i];
+            server_host_override = argv[++i];
         } else if ((arg == "-p" || arg == "--port") && i + 1 < argc) {
-            server_port = std::atoi(argv[++i]);
+            server_port_override = std::atoi(argv[++i]);
         } else if ((arg == "-i" || arg == "--interval") && i + 1 < argc) {
-            interval_seconds = std::atoi(argv[++i]);
+            interval_override = std::atoi(argv[++i]);
         } else {
             std::cerr << "Unknown option: " << arg << std::endl;
             printUsage(argv[0]);
             return 1;
         }
     }
+    
+    if (!config_file.empty()) {
+        if (!config.load_from_file(config_file)) {
+            std::cerr << "Failed to load config file: " << config_file << std::endl;
+            return 1;
+        }
+        std::cout << "Loaded config from: " << config_file << std::endl;
+    } else {
+        if (config.load()) {
+            std::cout << "Loaded config from: " << config.get_config_path() << std::endl;
+        } else {
+            std::cout << "No config file found, using defaults" << std::endl;
+        }
+    }
+    
+    std::string server_host = server_host_override.empty() 
+        ? config.get_string("collector.host", "localhost")
+        : server_host_override;
+    
+    int server_port = server_port_override != -1
+        ? server_port_override
+        : config.get_int("collector.port", 9090);
+    
+    int interval_seconds = interval_override != -1
+        ? interval_override
+        : config.get_int("agent.interval", 5);
     
     std::signal(SIGINT, signalHandler);
     std::signal(SIGTERM, signalHandler);

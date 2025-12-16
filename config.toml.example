@@ -1,0 +1,182 @@
+# Blinky Agent Configuration File
+# Copy this file to /etc/blinky/config.toml or ~/.blinky/config.toml
+
+[agent]
+# Unique identifier for this agent (auto-generated if not set)
+# hostname = "my-server-01"
+
+# Collection interval in seconds
+interval = 5
+
+# Enable/disable specific monitors
+[agent.monitors]
+cpu = true
+memory = true
+disk = true
+smart = true
+network = true
+systemd = true
+containers = true
+kubernetes = true
+
+[collector]
+# Collector server hostname or IP address
+host = "localhost"
+
+# Collector WebSocket port
+port = 9090
+
+# Connection timeout in seconds
+timeout = 10
+
+# Reconnect settings
+[collector.reconnect]
+# Enable automatic reconnection
+enabled = true
+
+# Initial retry delay in seconds
+initial_delay = 5
+
+# Maximum retry delay in seconds
+max_delay = 300
+
+# Backoff multiplier (exponential backoff)
+backoff_multiplier = 2.0
+
+# Maximum number of reconnection attempts (0 = unlimited)
+max_attempts = 0
+
+[logging]
+# Log level: debug, info, warn, error
+level = "info"
+
+# Log output: stdout, stderr, file
+output = "stdout"
+
+# Log file path (only used if output = "file")
+# file = "/var/log/blinky/agent.log"
+
+# Enable timestamps in logs
+timestamps = true
+
+# Enable colored output (only for stdout/stderr)
+colors = true
+
+[disk]
+# Exclude specific mount points from monitoring
+exclude_mounts = [
+    "/dev",
+    "/dev/shm",
+    "/run",
+    "/sys/fs/cgroup",
+    "/snap"
+]
+
+# Exclude filesystems by type
+exclude_fs_types = [
+    "tmpfs",
+    "devtmpfs",
+    "squashfs",
+    "overlay"
+]
+
+# Minimum disk size to monitor (in GB, 0 = monitor all)
+min_size_gb = 0
+
+[smart]
+# Enable SMART monitoring (requires smartctl)
+enabled = true
+
+# Path to smartctl binary
+smartctl_path = "/usr/sbin/smartctl"
+
+# Devices to monitor (empty = auto-detect)
+devices = []
+
+# Exclude specific devices
+exclude_devices = []
+
+[network]
+# Network interfaces to monitor (empty = monitor all)
+interfaces = []
+
+# Exclude specific interfaces
+exclude_interfaces = [
+    "lo",
+    "docker0",
+    "veth*"
+]
+
+# Include virtual interfaces
+include_virtual = false
+
+[systemd]
+# Enable systemd service monitoring
+enabled = true
+
+# Services to monitor (empty = monitor all active services)
+services = []
+
+# Exclude specific services
+exclude_services = []
+
+# Only monitor failed services
+only_failed = false
+
+[containers]
+# Enable Docker monitoring
+docker = true
+
+# Docker socket path
+docker_socket = "/var/run/docker.sock"
+
+# Enable Podman monitoring
+podman = true
+
+# Podman socket path
+podman_socket = "/run/podman/podman.sock"
+
+# Include stopped containers
+include_stopped = false
+
+[kubernetes]
+# Enable Kubernetes monitoring
+enabled = true
+
+# Kubeconfig path (empty = use default)
+kubeconfig = ""
+
+# Namespace to monitor (empty = all namespaces)
+namespace = ""
+
+# Include system namespaces
+include_system = false
+
+[security]
+# Enable TLS for WebSocket connection
+tls = false
+
+# Path to CA certificate
+# ca_cert = "/etc/blinky/ca.crt"
+
+# Path to client certificate
+# client_cert = "/etc/blinky/client.crt"
+
+# Path to client key
+# client_key = "/etc/blinky/client.key"
+
+# Verify server certificate
+verify_cert = true
+
+[performance]
+# Maximum number of metrics to buffer
+buffer_size = 100
+
+# Worker threads for data collection
+worker_threads = 4
+
+# Enable metric compression
+compression = false
+
+# Metric aggregation window in seconds
+aggregation_window = 0

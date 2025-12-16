@@ -175,10 +175,136 @@ else
 fi
 
 echo ""
+echo "Setting up configuration..."
+
+CONFIG_DIR="/etc/blinky"
+CONFIG_FILE="$CONFIG_DIR/config.toml"
+
+mkdir -p "$CONFIG_DIR"
+
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "Creating default config at $CONFIG_FILE..."
+    cat > "$CONFIG_FILE" << 'EOF'
+# Blinky Agent Configuration File
+# Edit this file to configure your agent
+
+[agent]
+# Collection interval in seconds
+interval = 5
+
+[collector]
+# Collector server hostname or IP address
+host = "localhost"
+
+# Collector WebSocket port
+port = 9090
+
+# Connection timeout in seconds
+timeout = 10
+
+[collector.reconnect]
+# Enable automatic reconnection
+enabled = true
+
+# Initial retry delay in seconds
+initial_delay = 5
+
+# Maximum retry delay in seconds
+max_delay = 300
+
+# Backoff multiplier (exponential backoff)
+backoff_multiplier = 2.0
+
+# Maximum number of reconnection attempts (0 = unlimited)
+max_attempts = 0
+
+[logging]
+# Log level: debug, info, warn, error
+level = "info"
+
+# Log output: stdout, stderr, file
+output = "stdout"
+
+# Enable timestamps in logs
+timestamps = true
+
+# Enable colored output
+colors = true
+
+[agent.monitors]
+cpu = true
+memory = true
+disk = true
+smart = true
+network = true
+systemd = true
+containers = true
+kubernetes = true
+
+[disk]
+# Exclude specific mount points from monitoring
+exclude_mounts = [
+    "/dev",
+    "/dev/shm",
+    "/run",
+    "/sys/fs/cgroup",
+    "/snap"
+]
+
+# Exclude filesystems by type
+exclude_fs_types = [
+    "tmpfs",
+    "devtmpfs",
+    "squashfs",
+    "overlay"
+]
+
+[network]
+# Exclude specific interfaces
+exclude_interfaces = [
+    "lo",
+    "docker0"
+]
+
+[containers]
+# Enable Docker monitoring
+docker = true
+
+# Docker socket path
+docker_socket = "/var/run/docker.sock"
+
+# Enable Podman monitoring
+podman = true
+
+# Podman socket path
+podman_socket = "/run/podman/podman.sock"
+
+[kubernetes]
+# Enable Kubernetes monitoring
+enabled = true
+EOF
+    chmod 644 "$CONFIG_FILE"
+    echo "Default config created at $CONFIG_FILE"
+else
+    echo "Config file already exists at $CONFIG_FILE (not overwriting)"
+fi
+
+echo ""
+echo "Installation complete!"
+echo ""
 echo "Installed version:"
 $INSTALL_DIR/blinky-agent --version
 echo ""
+echo "Configuration file: $CONFIG_FILE"
+echo ""
+echo "To configure the collector host, edit $CONFIG_FILE and set:"
+echo "  [collector]"
+echo "  host = \"your-collector-host\""
+echo ""
 echo "To run the agent:"
+echo "  blinky-agent"
+echo ""
+echo "Or override config with command line:"
 echo "  blinky-agent -s <collector-host> -p 9090"
 echo ""
 echo "For more information visit: https://github.com/$REPO"

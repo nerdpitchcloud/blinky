@@ -270,6 +270,34 @@ Options:
 http://monitoring.example.com:8081/
 ```
 
+### Monitoring Tools
+
+#### Live Terminal Monitor (btop-style)
+
+Monitor all hosts in real-time with a live updating terminal interface:
+
+```bash
+./blinky-monitor.py http://localhost:8081/api/metrics
+```
+
+Features:
+- Auto-refreshing every 5 seconds
+- Color-coded status indicators
+- Progress bars for CPU, memory, and disk usage
+- Shows all metrics: CPU, memory, disks, SMART health, network, containers, Kubernetes
+- Version mismatch warnings
+- Clean terminal UI
+
+#### Quick Status Check
+
+Get a quick snapshot of all hosts:
+
+```bash
+./blinky-check.sh http://localhost:8081/api/metrics
+```
+
+This provides a one-time status check without live updates, useful for scripts and automation.
+
 ## API Endpoints
 
 ### REST API

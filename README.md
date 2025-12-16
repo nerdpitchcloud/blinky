@@ -4,7 +4,9 @@ Blinky is a lightweight, real-time monitoring system for Linux hosts, specifical
 
 ## Quick Install
 
-Install the agent on any Debian/Ubuntu host with a single command:
+### AMD64 (x86_64) - Pre-built Binary
+
+Install the agent on any Debian/Ubuntu AMD64 host with a single command:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash
@@ -15,7 +17,16 @@ Or download a specific version:
 curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash -s v0.1.0
 ```
 
-Then configure and start:
+### ARM64 (aarch64) - Build from Source
+
+For ARM64 systems (Raspberry Pi, AWS Graviton, etc.):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-from-source.sh | sudo bash
+```
+
+### Configure and Start
+
 ```bash
 blinky-agent -s <collector-host> -p 9090 -i 5
 ```

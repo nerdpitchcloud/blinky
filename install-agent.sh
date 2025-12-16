@@ -63,7 +63,25 @@ if [ "$VERSION" = "latest" ]; then
     DOWNLOAD_URL=$(curl -s https://api.github.com/repos/$REPO/releases/latest | grep "browser_download_url.*blinky-agent.*linux-$ARCH.tar.gz" | cut -d '"' -f 4)
     
     if [ -z "$DOWNLOAD_URL" ]; then
-        echo "Error: Could not find latest release for $ARCH"
+        echo "Error: Pre-built binaries not available for $ARCH"
+        echo ""
+        echo "Currently, pre-built binaries are only available for AMD64 (x86_64)."
+        echo "For ARM64 systems, you need to build from source."
+        echo ""
+        echo "To build from source:"
+        echo "  1. Install dependencies:"
+        echo "     apt-get install -y build-essential cmake libssl-dev git"
+        echo ""
+        echo "  2. Clone and build:"
+        echo "     git clone https://github.com/$REPO.git"
+        echo "     cd blinky"
+        echo "     mkdir build && cd build"
+        echo "     cmake .."
+        echo "     make -j\$(nproc)"
+        echo ""
+        echo "  3. Install:"
+        echo "     cp agent/blinky-agent /usr/local/bin/"
+        echo ""
         exit 1
     fi
 fi

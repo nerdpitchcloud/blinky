@@ -2,24 +2,6 @@
 
 Blinky is a lightweight, real-time monitoring system for Linux hosts, specifically designed for Debian-based systems. It provides comprehensive system monitoring with minimal dependencies and overhead.
 
-## Features
-
-### Agent Monitoring Capabilities
-- **System Metrics**: CPU usage, memory, disk space, load average, uptime
-- **SMART Disk Health**: Monitor disk health status and temperature
-- **Network Statistics**: Interface traffic, packet counts, error rates
-- **Systemd Services**: Monitor service status and health
-- **Container Support**: Auto-detect and monitor Docker and Podman containers
-- **Kubernetes Integration**: Auto-discover k8s/k3s clusters and monitor pods/nodes
-- **Real-time Streaming**: Live metrics via WebSocket connection
-
-### Collector Features
-- **WebSocket Server**: Receive real-time metrics from multiple agents
-- **HTTP Dashboard**: Live web interface with auto-refresh
-- **Metrics Storage**: Historical data retention with configurable limits
-- **REST API**: Programmatic access to metrics
-- **Visual Indicators**: Color-coded alerts for CPU, memory, and disk usage
-
 ## Quick Install
 
 Install the agent on any Debian/Ubuntu host with a single command:

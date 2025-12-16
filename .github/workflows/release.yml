@@ -5,14 +5,60 @@ on:
     branches:
       - main
     tags:
-      - 'v*'
+      - 'v*.*.*'
 
 permissions:
   contents: write
 
 jobs:
+  version:
+    name: Determine Version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_release: ${{ steps.version.outputs.is_release }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Calculate version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/v* ]]; then
+            # Manual tag push (major/minor/patch)
+            VERSION=${GITHUB_REF#refs/tags/v}
+            IS_RELEASE="true"
+            echo "Manual release tag detected: v$VERSION"
+          else
+            # Automatic patch version increment on main branch
+            LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+            echo "Latest tag: $LATEST_TAG"
+            
+            # Parse version components
+            VERSION_NUM=${LATEST_TAG#v}
+            MAJOR=$(echo $VERSION_NUM | cut -d. -f1)
+            MINOR=$(echo $VERSION_NUM | cut -d. -f2)
+            PATCH=$(echo $VERSION_NUM | cut -d. -f3)
+            
+            # Auto-increment patch version
+            NEW_PATCH=$((PATCH + 1))
+            VERSION="$MAJOR.$MINOR.$NEW_PATCH"
+            IS_RELEASE="false"
+            
+            echo "Auto-incrementing patch version: v$VERSION"
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "is_release=$IS_RELEASE" >> $GITHUB_OUTPUT
+          echo "Final version: $VERSION"
+          echo "Is release: $IS_RELEASE"
+
   build:
     name: Build Binaries
+    needs: version
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -28,24 +74,6 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake libssl-dev
-
-      - name: Set up cross-compilation for ARM64
-        if: matrix.arch == 'arm64'
-        run: |
-          sudo dpkg --add-architecture arm64
-          sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libssl-dev:arm64
-          
-      - name: Get version
-        id: version
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            VERSION=${GITHUB_REF#refs/tags/v}
-          else
-            VERSION="0.1.0-dev.$(git rev-parse --short HEAD)"
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Building version: $VERSION"
 
       - name: Build binaries (AMD64)
         if: matrix.arch == 'amd64'
@@ -70,8 +98,8 @@ jobs:
         run: |
           mkdir -p dist
           cd build
-          tar -czf ../dist/blinky-agent-${{ steps.version.outputs.version }}-linux-${{ matrix.arch }}.tar.gz agent/blinky-agent
-          tar -czf ../dist/blinky-collector-${{ steps.version.outputs.version }}-linux-${{ matrix.arch }}.tar.gz collector/blinky-collector
+          tar -czf ../dist/blinky-agent-${{ needs.version.outputs.version }}-linux-${{ matrix.arch }}.tar.gz agent/blinky-agent
+          tar -czf ../dist/blinky-collector-${{ needs.version.outputs.version }}-linux-${{ matrix.arch }}.tar.gz collector/blinky-collector
           
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -81,35 +109,38 @@ jobs:
 
   release:
     name: Create Release
-    needs: build
+    needs: [version, build]
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
+    if: needs.version.outputs.is_release == 'true'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
 
-      - name: Get version
-        id: version
-        run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-
       - name: Generate changelog
         id: changelog
         run: |
           echo "## Changes" > CHANGELOG.md
-          git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> CHANGELOG.md || echo "- Initial release" >> CHANGELOG.md
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            echo "" >> CHANGELOG.md
+            git log --pretty=format:"- %s" $PREV_TAG..HEAD >> CHANGELOG.md
+          else
+            echo "- Initial release" >> CHANGELOG.md
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Release v${{ steps.version.outputs.version }}
+          name: Release v${{ needs.version.outputs.version }}
+          tag_name: v${{ needs.version.outputs.version }}
           body_path: CHANGELOG.md
           files: |
             dist/**/*.tar.gz
@@ -118,42 +149,55 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  latest:
-    name: Update Latest Release
-    needs: build
+  auto_release:
+    name: Create Auto-Patch Release
+    needs: [version, build]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: needs.version.outputs.is_release == 'false' && github.ref == 'refs/heads/main'
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: dist
 
-      - name: Delete existing latest release
-        continue-on-error: true
+      - name: Generate changelog
         run: |
-          gh release delete latest --yes
+          echo "## Automatic Patch Release v${{ needs.version.outputs.version }}" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "This is an automatic patch release from the main branch." >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "### Recent Changes" >> CHANGELOG.md
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$PREV_TAG" ]; then
+            git log --pretty=format:"- %s" $PREV_TAG..HEAD >> CHANGELOG.md
+          else
+            git log --pretty=format:"- %s" -10 >> CHANGELOG.md
+          fi
+
+      - name: Create and push tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "v${{ needs.version.outputs.version }}" -m "Automatic patch release v${{ needs.version.outputs.version }}"
+          git push origin "v${{ needs.version.outputs.version }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create/Update latest release
+      - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          name: Latest Development Build
-          tag_name: latest
-          body: |
-            Latest development build from main branch.
-            
-            **Warning**: This is a development build and may be unstable.
-            
-            Commit: ${{ github.sha }}
+          name: v${{ needs.version.outputs.version }}
+          tag_name: v${{ needs.version.outputs.version }}
+          body_path: CHANGELOG.md
           files: |
             dist/**/*.tar.gz
           draft: false
-          prerelease: true
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

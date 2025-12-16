@@ -1,0 +1,80 @@
+name: Version Check
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  validate:
+    name: Validate Version Tag
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Validate version format
+        run: |
+          TAG_VERSION=${GITHUB_REF#refs/tags/v}
+          
+          # Check format is X.Y.Z
+          if ! [[ $TAG_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Error: Version tag must be in format vX.Y.Z (e.g., v1.0.0)"
+            exit 1
+          fi
+          
+          # Parse version components
+          MAJOR=$(echo $TAG_VERSION | cut -d. -f1)
+          MINOR=$(echo $TAG_VERSION | cut -d. -f2)
+          PATCH=$(echo $TAG_VERSION | cut -d. -f3)
+          
+          echo "Tagged version: v$MAJOR.$MINOR.$PATCH"
+          
+          # Get previous version
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "v0.0.0")
+          PREV_VERSION=${PREV_TAG#v}
+          PREV_MAJOR=$(echo $PREV_VERSION | cut -d. -f1)
+          PREV_MINOR=$(echo $PREV_VERSION | cut -d. -f2)
+          PREV_PATCH=$(echo $PREV_VERSION | cut -d. -f3)
+          
+          echo "Previous version: v$PREV_MAJOR.$PREV_MINOR.$PREV_PATCH"
+          
+          # Validate version increment rules
+          if [ $MAJOR -gt $PREV_MAJOR ]; then
+            # Major version bump - minor and patch must be 0
+            if [ $MINOR -ne 0 ] || [ $PATCH -ne 0 ]; then
+              echo "Error: When incrementing major version, minor and patch must be 0"
+              echo "Expected: v$MAJOR.0.0, got: v$MAJOR.$MINOR.$PATCH"
+              exit 1
+            fi
+            echo "Valid major version increment: v$PREV_MAJOR.$PREV_MINOR.$PREV_PATCH -> v$MAJOR.0.0"
+            
+          elif [ $MAJOR -eq $PREV_MAJOR ] && [ $MINOR -gt $PREV_MINOR ]; then
+            # Minor version bump - patch must be 0
+            if [ $PATCH -ne 0 ]; then
+              echo "Error: When incrementing minor version, patch must be 0"
+              echo "Expected: v$MAJOR.$MINOR.0, got: v$MAJOR.$MINOR.$PATCH"
+              exit 1
+            fi
+            echo "Valid minor version increment: v$PREV_MAJOR.$PREV_MINOR.$PREV_PATCH -> v$MAJOR.$MINOR.0"
+            
+          elif [ $MAJOR -eq $PREV_MAJOR ] && [ $MINOR -eq $PREV_MINOR ] && [ $PATCH -gt $PREV_PATCH ]; then
+            # Patch version bump
+            echo "Valid patch version increment: v$PREV_MAJOR.$PREV_MINOR.$PREV_PATCH -> v$MAJOR.$MINOR.$PATCH"
+            
+          else
+            echo "Error: Invalid version increment"
+            echo "Previous: v$PREV_MAJOR.$PREV_MINOR.$PREV_PATCH"
+            echo "New: v$MAJOR.$MINOR.$PATCH"
+            echo ""
+            echo "Valid increments:"
+            echo "  - Major: v$((PREV_MAJOR + 1)).0.0"
+            echo "  - Minor: v$PREV_MAJOR.$((PREV_MINOR + 1)).0"
+            echo "  - Patch: v$PREV_MAJOR.$PREV_MINOR.$((PREV_PATCH + 1))"
+            exit 1
+          fi
+          
+          echo "Version validation passed!"

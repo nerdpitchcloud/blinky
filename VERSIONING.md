@@ -30,25 +30,25 @@ Major and minor version bumps must be done manually using the release script.
 
 ## Creating Manual Releases
 
-### Using the Release Script (Recommended)
+### Using GitHub Actions UI (Recommended)
 
-```bash
-# Increment major version (resets minor and patch to 0)
-./scripts/release.sh major
-# Example: v1.2.3 -> v2.0.0
+1. Go to the [Actions tab](https://github.com/nerdpitchcloud/blinky/actions)
+2. Click on "Manual Release" workflow
+3. Click "Run workflow" button
+4. Select version type:
+   - **major** - For breaking changes (v1.2.3 → v2.0.0)
+   - **minor** - For new features (v1.2.3 → v1.3.0)
+5. Click "Run workflow"
 
-# Increment minor version (resets patch to 0)
-./scripts/release.sh minor
-# Example: v1.2.3 -> v1.3.0
+The workflow will:
+- Calculate the new version automatically
+- Create and push the tag
+- Generate a changelog
+- Trigger the build and release process
 
-# Increment patch version (if needed manually)
-./scripts/release.sh patch
-# Example: v1.2.3 -> v1.2.4
-```
+### Manual Tag Creation (Advanced)
 
-### Manual Tag Creation
-
-If you prefer to create tags manually:
+If you need to create a specific version tag manually:
 
 ```bash
 # Get current version
@@ -60,6 +60,8 @@ git tag -a v2.0.0 -m "Release v2.0.0"
 # Push tag
 git push origin v2.0.0
 ```
+
+**Note**: Manual tags must follow SemVer rules or the version validation will fail.
 
 ## Version Rules
 
@@ -133,25 +135,21 @@ git push origin main
 ```
 
 ### Scenario 2: New Feature Release
-```bash
-# Developer completes new feature
-git push origin main
-
-# Maintainer creates minor release
-./scripts/release.sh minor
-
-# CI creates v1.3.0 with the new feature
+```
+1. Developer completes new feature
+2. Developer pushes to main
+3. Maintainer goes to GitHub Actions
+4. Runs "Manual Release" workflow with "minor"
+5. CI creates v1.3.0 with the new feature
 ```
 
 ### Scenario 3: Breaking Change
-```bash
-# Developer completes breaking change
-git push origin main
-
-# Maintainer creates major release
-./scripts/release.sh major
-
-# CI creates v2.0.0
+```
+1. Developer completes breaking change
+2. Developer pushes to main
+3. Maintainer goes to GitHub Actions
+4. Runs "Manual Release" workflow with "major"
+5. CI creates v2.0.0
 ```
 
 ## Version Validation
@@ -188,10 +186,10 @@ Each release includes:
 
 1. **Let patch versions auto-increment** - Don't manually create patch releases unless necessary
 2. **Plan major/minor releases** - Coordinate breaking changes and new features
-3. **Update CHANGELOG** - Document significant changes before major/minor releases
-4. **Test before tagging** - Ensure main branch is stable before creating manual releases
-5. **Use the release script** - It validates version rules automatically
-6. **Communicate breaking changes** - Announce major version bumps to users
+3. **Test before releasing** - Ensure main branch is stable before triggering manual releases
+4. **Use GitHub Actions UI** - It validates version rules automatically
+5. **Communicate breaking changes** - Announce major version bumps to users
+6. **Review auto-generated changelog** - Edit release notes after creation if needed
 
 ## Troubleshooting
 

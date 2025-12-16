@@ -34,7 +34,9 @@ port = 9090
 interval = 5
 ```
 
-See [config.toml.example](config.toml.example) for all available options.
+For complete configuration options, see:
+- [CONFIGURATION.md](CONFIGURATION.md) - Complete configuration guide
+- [config.toml.example](config.toml.example) - Example with all options
 
 ### Start the Agent
 

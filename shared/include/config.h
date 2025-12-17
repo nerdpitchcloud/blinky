@@ -129,6 +129,7 @@ public:
     }
 
     void set_defaults() {
+        values["agent.mode"] = "local";
         values["agent.interval"] = "5";
         values["agent.monitors.cpu"] = "true";
         values["agent.monitors.memory"] = "true";
@@ -139,6 +140,15 @@ public:
         values["agent.monitors.containers"] = "true";
         values["agent.monitors.kubernetes"] = "true";
         
+        values["storage.path"] = "/var/lib/blinky/metrics";
+        values["storage.max_files"] = "100";
+        values["storage.max_file_size_mb"] = "10";
+        
+        values["api.enabled"] = "true";
+        values["api.port"] = "9092";
+        values["api.bind_address"] = "0.0.0.0";
+        
+        values["collector.enabled"] = "false";
         values["collector.host"] = "localhost";
         values["collector.port"] = "9090";
         values["collector.timeout"] = "10";

@@ -2,6 +2,13 @@
 # Copy this file to /etc/blinky/config.toml or ~/.blinky/config.toml
 
 [agent]
+# Operating mode: local, push, pull, hybrid
+# - local: Store metrics locally only (no collector)
+# - push: Push metrics to collector (requires collector config)
+# - pull: Local storage + HTTP API for pulling metrics
+# - hybrid: Both push to collector AND store locally
+mode = "local"
+
 # Unique identifier for this agent (auto-generated if not set)
 # hostname = "my-server-01"
 
@@ -19,7 +26,30 @@ systemd = true
 containers = true
 kubernetes = true
 
+[storage]
+# Local storage path for metrics
+path = "/var/lib/blinky/metrics"
+
+# Maximum number of metric files to keep
+max_files = 100
+
+# Maximum file size in MB before rotation
+max_file_size_mb = 10
+
+[api]
+# Enable HTTP API for pull-based metrics collection
+enabled = true
+
+# API server port
+port = 9092
+
+# Bind address (0.0.0.0 for all interfaces, 127.0.0.1 for localhost only)
+bind_address = "0.0.0.0"
+
 [collector]
+# Enable pushing metrics to collector (for push/hybrid modes)
+enabled = false
+
 # Collector server hostname or IP address
 host = "localhost"
 

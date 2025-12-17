@@ -21,32 +21,89 @@ Or install a specific version:
 curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash -s v0.1.0
 ```
 
-## Configuration
+## Operating Modes
 
-After installation, configure the agent by editing `/etc/blinky/config.toml`:
+Blinky supports multiple operating modes:
+
+- **local**: Store metrics locally only (no network required)
+- **pull**: Local storage + HTTP API for pulling metrics (default)
+- **push**: Push metrics to collector via WebSocket
+- **hybrid**: Both push to collector AND store locally with API
+
+### Pull Mode (Default)
+
+The agent stores metrics locally and exposes an HTTP API:
+
+```bash
+# Start agent (uses pull mode by default)
+blinky-agent
+
+# Access latest metrics
+curl http://localhost:9092/metrics
+
+# Get last 100 metrics
+curl http://localhost:9092/metrics/latest?count=100
+
+# Health check
+curl http://localhost:9092/health
+```
+
+Metrics are stored in `/var/lib/blinky/metrics` with automatic rotation.
+
+### Push Mode
+
+Configure the agent to push metrics to a collector:
 
 ```toml
-[collector]
-host = "your-collector-host"
-port = 9090
-
 [agent]
+mode = "push"
+
+[collector]
+enabled = true
+host = "collector.example.com"
+port = 9090
+```
+
+### Hybrid Mode
+
+Get the best of both worlds - push to collector AND maintain local storage:
+
+```toml
+[agent]
+mode = "hybrid"
+
+[collector]
+enabled = true
+host = "collector.example.com"
+```
+
+## Configuration
+
+Edit `/etc/blinky/config.toml` to configure the agent:
+
+```toml
+[agent]
+mode = "pull"  # local, pull, push, or hybrid
 interval = 5
+
+[storage]
+path = "/var/lib/blinky/metrics"
+max_files = 100
+max_file_size_mb = 10
+
+[api]
+enabled = true
+port = 9092
+
+[collector]
+enabled = false
+host = "localhost"
+port = 9090
 ```
 
 For complete configuration options, see:
 - [CONFIGURATION.md](CONFIGURATION.md) - Complete configuration guide
 - [config.toml.example](config.toml.example) - Example with all options
-
-### Start the Agent
-
-```bash
-# Using config file
-blinky-agent
-
-# Or override with command line
-blinky-agent -s <collector-host> -p 9090 -i 5
-```
 
 ### Collector (Docker)
 

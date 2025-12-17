@@ -179,8 +179,11 @@ echo "Setting up configuration..."
 
 CONFIG_DIR="/etc/blinky"
 CONFIG_FILE="$CONFIG_DIR/config.toml"
+STORAGE_DIR="/var/lib/blinky/metrics"
 
 mkdir -p "$CONFIG_DIR"
+mkdir -p "$STORAGE_DIR"
+chmod 755 "$STORAGE_DIR"
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Creating default config at $CONFIG_FILE..."
@@ -189,10 +192,40 @@ if [ ! -f "$CONFIG_FILE" ]; then
 # Edit this file to configure your agent
 
 [agent]
+# Operating mode: local, push, pull, hybrid
+# - local: Store metrics locally only (default)
+# - push: Push metrics to collector
+# - pull: Local storage + HTTP API for pulling
+# - hybrid: Both push and local storage
+mode = "pull"
+
 # Collection interval in seconds
 interval = 5
 
+[storage]
+# Local storage path for metrics
+path = "/var/lib/blinky/metrics"
+
+# Maximum number of metric files to keep
+max_files = 100
+
+# Maximum file size in MB before rotation
+max_file_size_mb = 10
+
+[api]
+# Enable HTTP API for pull-based collection
+enabled = true
+
+# API server port
+port = 9092
+
+# Bind address (0.0.0.0 for all interfaces)
+bind_address = "0.0.0.0"
+
 [collector]
+# Enable pushing to collector (for push/hybrid modes)
+enabled = false
+
 # Collector server hostname or IP address
 host = "localhost"
 
@@ -296,15 +329,25 @@ echo "Installed version:"
 $INSTALL_DIR/blinky-agent --version
 echo ""
 echo "Configuration file: $CONFIG_FILE"
+echo "Storage directory: $STORAGE_DIR"
 echo ""
-echo "To configure the collector host, edit $CONFIG_FILE and set:"
-echo "  [collector]"
-echo "  host = \"your-collector-host\""
+echo "The agent is configured in 'pull' mode by default:"
+echo "  - Metrics stored locally in $STORAGE_DIR"
+echo "  - HTTP API available on port 9092"
+echo "  - Access metrics: curl http://localhost:9092/metrics"
 echo ""
 echo "To run the agent:"
 echo "  blinky-agent"
 echo ""
-echo "Or override config with command line:"
-echo "  blinky-agent -s <collector-host> -p 9090"
+echo "To change mode, edit $CONFIG_FILE:"
+echo "  mode = \"local\"  - Local storage only"
+echo "  mode = \"pull\"   - Local storage + HTTP API (default)"
+echo "  mode = \"push\"   - Push to collector"
+echo "  mode = \"hybrid\" - Both push and local storage"
+echo ""
+echo "For push/hybrid modes, configure collector:"
+echo "  [collector]"
+echo "  enabled = true"
+echo "  host = \"your-collector-host\""
 echo ""
 echo "For more information visit: https://github.com/$REPO"

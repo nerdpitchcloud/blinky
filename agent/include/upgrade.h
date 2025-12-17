@@ -231,7 +231,16 @@ private:
             return false;
         }
 
-        return std::filesystem::exists(tmp_dir + "/blinky-agent");
+        // Check both possible locations (root and agent/ subdirectory)
+        if (std::filesystem::exists(tmp_dir + "/blinky-agent")) {
+            return true;
+        } else if (std::filesystem::exists(tmp_dir + "/agent/blinky-agent")) {
+            // Move from agent/ subdirectory to root
+            std::filesystem::rename(tmp_dir + "/agent/blinky-agent", tmp_dir + "/blinky-agent");
+            return true;
+        }
+        
+        return false;
     }
 
     bool install_binary(const std::string& tmp_dir) {

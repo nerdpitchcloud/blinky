@@ -1,5 +1,11 @@
 # Blinky
 
+[![GitHub Release](https://img.shields.io/github/v/release/nerdpitchcloud/blinky)](https://github.com/nerdpitchcloud/blinky/releases/latest)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/nerdpitchcloud/blinky/release.yml?branch=main)](https://github.com/nerdpitchcloud/blinky/actions)
+[![License](https://img.shields.io/github/license/nerdpitchcloud/blinky)](https://github.com/nerdpitchcloud/blinky/blob/main/LICENSE)
+[![Platform](https://img.shields.io/badge/platform-Linux-blue)](https://github.com/nerdpitchcloud/blinky)
+[![Architecture](https://img.shields.io/badge/arch-amd64%20%7C%20arm64-green)](https://github.com/nerdpitchcloud/blinky/releases)
+
 Blinky is a lightweight, real-time monitoring system for Linux hosts, specifically designed for Debian-based systems. It provides comprehensive system monitoring with minimal dependencies and overhead.
 
 **Supported Architectures:** AMD64 (x86_64) and ARM64 (aarch64)

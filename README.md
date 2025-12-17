@@ -79,7 +79,7 @@ host = "collector.example.com"
 
 ## Configuration
 
-Edit `/etc/blinky/config.toml` to configure the agent:
+Edit `~/.blinky/config.toml` to configure the agent:
 
 ```toml
 [agent]

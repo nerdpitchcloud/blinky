@@ -1,5 +1,5 @@
 # Blinky Agent Configuration File
-# Copy this file to /etc/blinky/config.toml or ~/.blinky/config.toml
+# Copy this file to ~/.blinky/config.toml (recommended) or /etc/blinky/config.toml
 
 [agent]
 # Operating mode: local, push, pull, hybrid

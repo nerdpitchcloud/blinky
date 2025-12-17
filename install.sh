@@ -177,13 +177,29 @@ fi
 echo ""
 echo "Setting up configuration..."
 
-CONFIG_DIR="/etc/blinky"
+# Determine config directory based on user
+if [ -n "$SUDO_USER" ]; then
+    # Running with sudo, use the actual user's home
+    USER_HOME=$(eval echo ~$SUDO_USER)
+    CONFIG_DIR="$USER_HOME/.blinky"
+    CONFIG_OWNER="$SUDO_USER"
+else
+    # Running as root directly
+    CONFIG_DIR="/etc/blinky"
+    CONFIG_OWNER="root"
+fi
+
 CONFIG_FILE="$CONFIG_DIR/config.toml"
 STORAGE_DIR="/var/lib/blinky/metrics"
 
 mkdir -p "$CONFIG_DIR"
 mkdir -p "$STORAGE_DIR"
 chmod 755 "$STORAGE_DIR"
+
+# Set proper ownership for user config
+if [ "$CONFIG_DIR" != "/etc/blinky" ] && [ -n "$SUDO_USER" ]; then
+    chown -R "$SUDO_USER:$SUDO_USER" "$CONFIG_DIR"
+fi
 
 if [ ! -f "$CONFIG_FILE" ]; then
     echo "Creating default config at $CONFIG_FILE..."
@@ -317,6 +333,12 @@ podman_socket = "/run/podman/podman.sock"
 enabled = true
 EOF
     chmod 644 "$CONFIG_FILE"
+    
+    # Set proper ownership for user config
+    if [ "$CONFIG_DIR" != "/etc/blinky" ] && [ -n "$SUDO_USER" ]; then
+        chown "$SUDO_USER:$SUDO_USER" "$CONFIG_FILE"
+    fi
+    
     echo "Default config created at $CONFIG_FILE"
 else
     echo "Config file already exists at $CONFIG_FILE (not overwriting)"
@@ -339,7 +361,14 @@ echo ""
 echo "To run the agent:"
 echo "  blinky-agent"
 echo ""
-echo "To change mode, edit $CONFIG_FILE:"
+echo "To edit configuration:"
+if [ "$CONFIG_DIR" != "/etc/blinky" ]; then
+    echo "  nano ~/.blinky/config.toml"
+else
+    echo "  sudo nano /etc/blinky/config.toml"
+fi
+echo ""
+echo "Available modes:"
 echo "  mode = \"local\"  - Local storage only"
 echo "  mode = \"pull\"   - Local storage + HTTP API (default)"
 echo "  mode = \"push\"   - Push to collector"

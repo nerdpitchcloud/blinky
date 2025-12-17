@@ -111,9 +111,153 @@ jobs:
           name: binaries-${{ matrix.arch }}
           path: dist/*.tar.gz
 
+  package_deb:
+    name: Build DEB Package
+    needs: version
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up build environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake libssl-dev dpkg-dev
+
+      - name: Build binaries
+        run: |
+          mkdir build && cd build
+          cmake -DCMAKE_BUILD_TYPE=Release ..
+          make -j$(nproc)
+
+      - name: Create DEB package structure
+        run: |
+          VERSION=${{ needs.version.outputs.version }}
+          PKG_NAME="blinky-agent_${VERSION}_amd64"
+          mkdir -p ${PKG_NAME}/DEBIAN
+          mkdir -p ${PKG_NAME}/usr/local/bin
+          mkdir -p ${PKG_NAME}/etc/blinky
+          mkdir -p ${PKG_NAME}/var/lib/blinky/metrics
+          mkdir -p ${PKG_NAME}/etc/systemd/system
+          
+          # Copy binaries
+          cp build/agent/blinky-agent ${PKG_NAME}/usr/local/bin/
+          chmod 755 ${PKG_NAME}/usr/local/bin/blinky-agent
+          
+          # Create default config
+          cat > ${PKG_NAME}/etc/blinky/config.toml << 'EOF'
+          [agent]
+          mode = "pull"
+          interval = 5
+          
+          [storage]
+          path = "/var/lib/blinky/metrics"
+          max_files = 100
+          max_file_size_mb = 10
+          
+          [api]
+          enabled = true
+          port = 9092
+          bind_address = "0.0.0.0"
+          
+          [collector]
+          enabled = false
+          host = "localhost"
+          port = 9090
+          timeout = 10
+          
+          [agent.monitors]
+          cpu = true
+          memory = true
+          disk = true
+          smart = true
+          network = true
+          systemd = true
+          containers = true
+          kubernetes = true
+          EOF
+          
+          # Create systemd service
+          cat > ${PKG_NAME}/etc/systemd/system/blinky-agent.service << 'EOF'
+          [Unit]
+          Description=Blinky Monitoring Agent
+          After=network.target
+          
+          [Service]
+          Type=simple
+          ExecStart=/usr/local/bin/blinky-agent
+          Restart=always
+          RestartSec=10
+          
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+          
+          # Create control file
+          cat > ${PKG_NAME}/DEBIAN/control << EOF
+          Package: blinky-agent
+          Version: ${VERSION}
+          Section: admin
+          Priority: optional
+          Architecture: amd64
+          Maintainer: Blinky Team <blinky@example.com>
+          Description: Lightweight monitoring agent for Linux hosts
+           Blinky is a real-time monitoring system that collects system metrics
+           including CPU, memory, disk, network, containers, and Kubernetes.
+           Supports multiple operating modes: local, pull, push, and hybrid.
+          Homepage: https://github.com/nerdpitchcloud/blinky
+          EOF
+          
+          # Create postinst script
+          cat > ${PKG_NAME}/DEBIAN/postinst << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          # Create storage directory if it doesn't exist
+          mkdir -p /var/lib/blinky/metrics
+          chmod 755 /var/lib/blinky/metrics
+          
+          # Reload systemd
+          systemctl daemon-reload
+          
+          echo "Blinky agent installed successfully!"
+          echo "To start the agent: sudo systemctl start blinky-agent"
+          echo "To enable on boot: sudo systemctl enable blinky-agent"
+          echo "Configuration: /etc/blinky/config.toml"
+          EOF
+          chmod 755 ${PKG_NAME}/DEBIAN/postinst
+          
+          # Create prerm script
+          cat > ${PKG_NAME}/DEBIAN/prerm << 'EOF'
+          #!/bin/bash
+          set -e
+          
+          # Stop service if running
+          if systemctl is-active --quiet blinky-agent; then
+              systemctl stop blinky-agent
+          fi
+          EOF
+          chmod 755 ${PKG_NAME}/DEBIAN/prerm
+          
+          # Build the package
+          dpkg-deb --build ${PKG_NAME}
+          
+          # Move to dist directory
+          mkdir -p dist
+          mv ${PKG_NAME}.deb dist/
+
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deb-package
+          path: dist/*.deb
+
   release:
     name: Create Release
-    needs: [version, build]
+    needs: [version, build, package_deb]
     runs-on: ubuntu-latest
     if: needs.version.outputs.is_release == 'true'
     
@@ -155,7 +299,7 @@ jobs:
 
   auto_release:
     name: Create Auto-Patch Release
-    needs: [version, build]
+    needs: [version, build, package_deb]
     runs-on: ubuntu-latest
     if: needs.version.outputs.is_release == 'false' && github.ref == 'refs/heads/main'
     

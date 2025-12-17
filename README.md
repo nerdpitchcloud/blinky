@@ -4,6 +4,8 @@ Blinky is a lightweight, real-time monitoring system for Linux hosts, specifical
 
 ## Quick Install
 
+### Option 1: Install Script (Recommended)
+
 Install the agent on any Debian/Ubuntu host (AMD64 or ARM64):
 
 ```bash
@@ -19,6 +21,22 @@ The installer automatically:
 Or install a specific version:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash -s v0.1.0
+```
+
+### Option 2: DEB Package (Debian/Ubuntu AMD64)
+
+Download and install the .deb package:
+
+```bash
+# Download latest release
+wget https://github.com/nerdpitchcloud/blinky/releases/latest/download/blinky-agent_VERSION_amd64.deb
+
+# Install
+sudo dpkg -i blinky-agent_VERSION_amd64.deb
+
+# Start the service
+sudo systemctl start blinky-agent
+sudo systemctl enable blinky-agent
 ```
 
 ## Operating Modes

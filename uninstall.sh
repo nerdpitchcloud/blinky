@@ -2,17 +2,9 @@
 # Blinky Agent Uninstaller Script
 
 INSTALL_DIR="/usr/local/bin"
-SYSTEM_CONFIG_DIR="/etc/blinky"
+CONFIG_DIR="/etc/blinky"
 STORAGE_DIR="/var/lib/blinky"
 SERVICE_FILE="/etc/systemd/system/blinky-agent.service"
-
-# Determine user config directory
-if [ -n "$SUDO_USER" ]; then
-    USER_HOME=$(eval echo ~$SUDO_USER)
-    USER_CONFIG_DIR="$USER_HOME/.blinky"
-else
-    USER_CONFIG_DIR=""
-fi
 
 echo "Blinky Agent Uninstaller"
 echo "========================"
@@ -31,12 +23,7 @@ fi
 
 echo "This will remove:"
 echo "  - Binary: $INSTALL_DIR/blinky-agent"
-if [ -d "$USER_CONFIG_DIR" ]; then
-    echo "  - User config: $USER_CONFIG_DIR"
-fi
-if [ -d "$SYSTEM_CONFIG_DIR" ]; then
-    echo "  - System config: $SYSTEM_CONFIG_DIR"
-fi
+echo "  - Config: $CONFIG_DIR"
 echo "  - Storage: $STORAGE_DIR"
 echo "  - Service: $SERVICE_FILE (if exists)"
 echo ""
@@ -71,27 +58,13 @@ if [ -f "$INSTALL_DIR/blinky-agent" ]; then
 fi
 
 echo ""
-if [ -d "$USER_CONFIG_DIR" ]; then
-    read -p "Remove user configuration in $USER_CONFIG_DIR? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Removing user configuration..."
-        rm -rf "$USER_CONFIG_DIR"
-    else
-        echo "Keeping user configuration at $USER_CONFIG_DIR"
-    fi
-fi
-
-if [ -d "$SYSTEM_CONFIG_DIR" ]; then
-    echo ""
-    read -p "Remove system configuration in $SYSTEM_CONFIG_DIR? (y/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Removing system configuration..."
-        rm -rf "$SYSTEM_CONFIG_DIR"
-    else
-        echo "Keeping system configuration at $SYSTEM_CONFIG_DIR"
-    fi
+read -p "Remove configuration files in $CONFIG_DIR? (y/N) " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]]; then
+    echo "Removing configuration..."
+    rm -rf "$CONFIG_DIR"
+else
+    echo "Keeping configuration at $CONFIG_DIR"
 fi
 
 echo ""
@@ -109,11 +82,8 @@ echo "Uninstall complete!"
 echo ""
 
 REMAINING=""
-if [ -d "$USER_CONFIG_DIR" ]; then
-    REMAINING="${REMAINING}  - User configuration: $USER_CONFIG_DIR\n"
-fi
-if [ -d "$SYSTEM_CONFIG_DIR" ]; then
-    REMAINING="${REMAINING}  - System configuration: $SYSTEM_CONFIG_DIR\n"
+if [ -d "$CONFIG_DIR" ]; then
+    REMAINING="${REMAINING}  - Configuration: $CONFIG_DIR\n"
 fi
 if [ -d "$STORAGE_DIR" ]; then
     REMAINING="${REMAINING}  - Stored metrics: $STORAGE_DIR\n"

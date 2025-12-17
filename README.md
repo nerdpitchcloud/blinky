@@ -251,24 +251,24 @@ graph TB
     style ADMIN fill:#f59e0b,color:#fff
 ```
 
-## Releases
+## Upgrading
 
-Blinky follows [Semantic Versioning](https://semver.org/) (SemVer):
-- **Major version** (X.0.0): Breaking changes
-- **Minor version** (0.X.0): New features, backward compatible
-- **Patch version** (0.0.X): Bug fixes, backward compatible
+Upgrade to the latest version with a single command:
 
-### Available Downloads
+```bash
+sudo blinky-agent upgrade
+```
 
-Pre-built binaries are available for:
-- **Linux AMD64** (x86_64)
-- **Linux ARM64** (aarch64)
+The upgrade command will:
+- Check GitHub for the latest release
+- Download and verify the new version
+- Install the update automatically
+- Preserve your configuration
 
-Download the latest release from [GitHub Releases](https://github.com/nerdpitchcloud/blinky/releases).
-
-### Version Tracking
-
-The collector automatically tracks agent versions and displays warnings when version mismatches are detected. This helps ensure compatibility across your infrastructure.
+If running as a service, restart it after upgrade:
+```bash
+sudo systemctl restart blinky-agent
+```
 
 ## Building
 
@@ -393,73 +393,6 @@ Example API response:
     }
   ]
 }
-```
-
-## Monitored Metrics
-
-### System Metrics
-- CPU usage percentage
-- Load averages (1, 5, 15 minutes)
-- Memory usage and availability
-- Disk usage per mount point
-- System uptime
-
-### SMART Data
-- Disk temperature
-- Power-on hours
-- Reallocated sectors
-- Pending sectors
-- Health status (PASSED/FAILED)
-
-### Network
-- Bytes/packets received and transmitted
-- Error counts per interface
-
-### Systemd Services
-- Service state (active/inactive)
-- Sub-state
-- Enabled status
-
-### Containers
-- Docker and Podman support
-- Container state
-- CPU and memory usage
-- Runtime information
-
-### Kubernetes
-- Cluster type detection (k8s/k3s)
-- Pod count
-- Node count
-- Namespace list
-
-## Dependencies
-
-### Runtime Dependencies
-- Linux kernel with /proc filesystem
-- systemd (for service monitoring)
-- smartctl (for SMART disk monitoring, optional)
-- docker/podman (for container monitoring, optional)
-- kubectl/k3s (for Kubernetes monitoring, optional)
-
-### Build Dependencies
-- C++17 compiler (GCC 7+ or Clang 5+)
-- CMake 3.14+
-- OpenSSL development libraries
-
-## Project Structure
-
-```
-blinky/
-├── agent/              # Monitoring agent
-│   ├── include/        # Agent headers
-│   └── src/            # Agent implementation
-├── collector/          # Collector server
-│   ├── include/        # Collector headers
-│   └── src/            # Collector implementation
-├── shared/             # Shared protocol library
-│   ├── include/        # Shared headers
-│   └── src/            # Shared implementation
-└── build/              # Build output
 ```
 
 ## License

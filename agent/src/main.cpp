@@ -5,6 +5,7 @@
 #include "config.h"
 #include "local_storage.h"
 #include "http_api.h"
+#include "upgrade.h"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -23,7 +24,11 @@ void signalHandler(int signal) {
 }
 
 void printUsage(const char* program) {
-    std::cout << "Usage: " << program << " [options]\n"
+    std::cout << "Usage: " << program << " [options|command]\n"
+              << "\n"
+              << "Commands:\n"
+              << "  upgrade                 Check for updates and upgrade to latest version\n"
+              << "\n"
               << "Options:\n"
               << "  -h, --help              Show this help message\n"
               << "  -v, --version           Show version information\n"
@@ -34,19 +39,33 @@ void printUsage(const char* program) {
               << "  -i, --interval SECONDS  Collection interval (overrides config)\n"
               << "\n"
               << "Operating Modes:\n"
-              << "  local   - Store metrics locally only (default)\n"
+              << "  local   - Store metrics locally only\n"
+              << "  pull    - Local storage + HTTP API (port 9092) [default]\n"
               << "  push    - Push metrics to collector\n"
-              << "  pull    - Local storage + HTTP API (port 9092)\n"
               << "  hybrid  - Both push and local storage with API\n"
               << "\n"
               << "Config file locations (in order of precedence):\n"
               << "  /etc/blinky/config.toml\n"
               << "  ~/.blinky/config.toml\n"
               << "  ./config.toml\n"
+              << "\n"
+              << "Examples:\n"
+              << "  " << program << "                    # Start agent with default config\n"
+              << "  " << program << " upgrade            # Upgrade to latest version\n"
+              << "  " << program << " -m pull            # Run in pull mode\n"
+              << "  " << program << " -m push -s host    # Push to collector\n"
               << std::endl;
 }
 
 int main(int argc, char* argv[]) {
+    if (argc > 1) {
+        std::string first_arg = argv[1];
+        if (first_arg == "upgrade") {
+            agent::Upgrader upgrader;
+            return upgrader.upgrade() ? 0 : 1;
+        }
+    }
+    
     Config config;
     std::string config_file;
     std::string mode_override;

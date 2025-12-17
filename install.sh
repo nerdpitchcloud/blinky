@@ -61,14 +61,19 @@ install_from_binary() {
     echo "Extracting archive..."
     tar -xzf blinky-agent.tar.gz
     
-    if [ ! -f "blinky-agent" ]; then
+    # Check for binary in both root and agent/ subdirectory
+    if [ -f "blinky-agent" ]; then
+        BINARY_PATH="blinky-agent"
+    elif [ -f "agent/blinky-agent" ]; then
+        BINARY_PATH="agent/blinky-agent"
+    else
         echo "Error: Binary not found in archive"
         rm -rf $tmp_dir
         return 1
     fi
     
     echo "Installing to $INSTALL_DIR..."
-    mv blinky-agent $INSTALL_DIR/
+    mv "$BINARY_PATH" $INSTALL_DIR/blinky-agent
     chmod +x $INSTALL_DIR/blinky-agent
     
     rm -rf $tmp_dir

@@ -357,20 +357,17 @@ http://monitoring.example.com:9091/
 View live metrics with the included Python script:
 
 ```bash
-# Quick snapshot
+# Local agent
 ./blinky-me.py
 
+# Remote agent
+./blinky-me.py 192.168.1.100
+
 # Live updates
-./blinky-me.py --watch
+./blinky-me.py 192.168.1.100 -w
 
 # Show all details
-./blinky-me.py --all --watch
-
-# Remote agent
-./blinky-me.py --url http://host:9092/metrics
-
-# Collector
-./blinky-me.py --collector http://host:9091/api/metrics --watch
+./blinky-me.py 192.168.1.100 -w -a
 ```
 
 ## API Endpoints

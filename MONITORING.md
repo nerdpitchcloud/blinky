@@ -5,20 +5,17 @@ Simple Python script for viewing Blinky metrics in your terminal.
 ## Usage
 
 ```bash
-# Quick snapshot
+# Local agent
 ./blinky-me.py
 
+# Remote agent
+./blinky-me.py 192.168.1.100
+
 # Live updates
-./blinky-me.py --watch
+./blinky-me.py 192.168.1.100 -w
 
 # Show all details
-./blinky-me.py --all --watch
-
-# Remote agent
-./blinky-me.py --url http://host:9092/metrics --watch
-
-# Collector
-./blinky-me.py --collector http://host:9091/api/metrics --watch
+./blinky-me.py 192.168.1.100 -w -a
 ```
 
 ## Features
@@ -32,8 +29,7 @@ Simple Python script for viewing Blinky metrics in your terminal.
 ## Options
 
 ```
---url URL             Agent URL (default: http://localhost:9092/metrics)
---collector URL       Collector URL
+host                  Host IP or hostname (default: localhost)
 --watch, -w           Live updates
 --interval, -i SEC    Refresh interval (default: 5)
 --all, -a             Show all details
@@ -44,9 +40,9 @@ Simple Python script for viewing Blinky metrics in your terminal.
 ```bash
 # Monitor multiple hosts in tmux
 tmux split-window -h
-./blinky-me.py --url http://host1:9092/metrics --watch
-./blinky-me.py --url http://host2:9092/metrics --watch
+./blinky-me.py 192.168.1.10 -w
+./blinky-me.py 192.168.1.20 -w
 
 # Cron job
-*/5 * * * * /opt/blinky/blinky-me.py >> /var/log/blinky.log
+*/5 * * * * /opt/blinky/blinky-me.py 192.168.1.100 >> /var/log/blinky.log
 ```

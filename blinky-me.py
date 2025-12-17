@@ -180,19 +180,18 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s                              # Local agent (default)
-  %(prog)s --url http://host:9092       # Remote agent
-  %(prog)s --collector http://host:9091 # Collector
-  %(prog)s --watch                      # Live updates
-  %(prog)s --all                        # Show all details
+  %(prog)s                    # Local agent
+  %(prog)s 192.168.1.100      # Remote agent
+  %(prog)s host.example.com   # Remote agent by hostname
+  %(prog)s 10.0.0.5 -w        # Watch mode
+  %(prog)s 10.0.0.5 -w -a     # Watch with all details
         """
     )
     
-    parser.add_argument('--url', 
-                       default='http://localhost:9092/metrics',
-                       help='Agent metrics URL (default: http://localhost:9092/metrics)')
-    parser.add_argument('--collector',
-                       help='Collector URL (e.g., http://localhost:9091/api/metrics)')
+    parser.add_argument('host',
+                       nargs='?',
+                       default='localhost',
+                       help='Host IP or hostname (default: localhost)')
     parser.add_argument('--watch', '-w',
                        action='store_true',
                        help='Watch mode - refresh every 5 seconds')
@@ -206,8 +205,12 @@ Examples:
     
     args = parser.parse_args()
     
-    # Use collector URL if specified
-    url = args.collector if args.collector else args.url
+    # Build URL from host
+    host = args.host
+    if not host.startswith('http'):
+        url = f'http://{host}:9092/metrics'
+    else:
+        url = host if '/metrics' in host else f'{host}/metrics'
     
     try:
         if args.watch:

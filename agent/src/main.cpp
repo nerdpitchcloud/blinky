@@ -92,6 +92,7 @@ void printUsage(const char* program) {
     std::cout << "Usage: " << program << " [options|command]\n"
               << "\n"
               << "Commands:\n"
+              << "  version                 Show detailed version information\n"
               << "  upgrade                 Check for updates and upgrade to latest version\n"
               << "\n"
               << "Options:\n"
@@ -120,6 +121,7 @@ void printUsage(const char* program) {
               << "Examples:\n"
               << "  " << program << "                    # Start agent in background (daemon)\n"
               << "  " << program << " -f                 # Run in foreground\n"
+              << "  " << program << " version            # Show version information\n"
               << "  " << program << " upgrade            # Upgrade to latest version\n"
               << "  " << program << " -m pull            # Run in pull mode\n"
               << "  " << program << " -m push -s host    # Push to collector\n"
@@ -132,6 +134,42 @@ int main(int argc, char* argv[]) {
         if (first_arg == "upgrade") {
             agent::Upgrader upgrader;
             return upgrader.upgrade() ? 0 : 1;
+        } else if (first_arg == "version") {
+            std::cout << "Blinky Agent " << version::getFullVersionString() << std::endl;
+            std::cout << std::endl;
+            std::cout << "Build Information:" << std::endl;
+            std::cout << "  Architecture: " << 
+#if defined(__x86_64__) || defined(_M_X64)
+                "amd64 (x86_64)"
+#elif defined(__aarch64__) || defined(_M_ARM64)
+                "arm64 (aarch64)"
+#else
+                "unknown"
+#endif
+                << std::endl;
+            std::cout << "  Compiler: "
+#if defined(__clang__)
+                << "Clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__
+#elif defined(__GNUC__)
+                << "GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__
+#else
+                << "Unknown"
+#endif
+                << std::endl;
+            std::cout << "  Platform: "
+#if defined(__linux__)
+                << "Linux"
+#elif defined(__APPLE__)
+                << "macOS"
+#elif defined(_WIN32)
+                << "Windows"
+#else
+                << "Unknown"
+#endif
+                << std::endl;
+            std::cout << std::endl;
+            std::cout << "Repository: https://github.com/nerdpitchcloud/blinky" << std::endl;
+            return 0;
         }
     }
     
@@ -151,6 +189,39 @@ int main(int argc, char* argv[]) {
             return 0;
         } else if (arg == "-v" || arg == "--version") {
             std::cout << "Blinky Agent " << version::getFullVersionString() << std::endl;
+            std::cout << std::endl;
+            std::cout << "Build Information:" << std::endl;
+            std::cout << "  Architecture: " << 
+#if defined(__x86_64__) || defined(_M_X64)
+                "amd64 (x86_64)"
+#elif defined(__aarch64__) || defined(_M_ARM64)
+                "arm64 (aarch64)"
+#else
+                "unknown"
+#endif
+                << std::endl;
+            std::cout << "  Compiler: "
+#if defined(__clang__)
+                << "Clang " << __clang_major__ << "." << __clang_minor__ << "." << __clang_patchlevel__
+#elif defined(__GNUC__)
+                << "GCC " << __GNUC__ << "." << __GNUC_MINOR__ << "." << __GNUC_PATCHLEVEL__
+#else
+                << "Unknown"
+#endif
+                << std::endl;
+            std::cout << "  Platform: "
+#if defined(__linux__)
+                << "Linux"
+#elif defined(__APPLE__)
+                << "macOS"
+#elif defined(_WIN32)
+                << "Windows"
+#else
+                << "Unknown"
+#endif
+                << std::endl;
+            std::cout << std::endl;
+            std::cout << "Repository: https://github.com/nerdpitchcloud/blinky" << std::endl;
             return 0;
         } else if ((arg == "-c" || arg == "--config") && i + 1 < argc) {
             config_file = argv[++i];

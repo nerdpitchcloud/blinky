@@ -1,4 +1,5 @@
 #include "collector.h"
+#include "system_info.h"
 #include <unistd.h>
 #include <cstring>
 #include <ctime>
@@ -19,6 +20,9 @@ void MetricsCollector::initialize() {
     } else {
         current_metrics_.hostname = "unknown";
     }
+    
+    // Collect system info once at initialization
+    current_metrics_.system_info = SystemInfoCollector::collect();
     
     monitors_.push_back(std::make_unique<CPUMonitor>(current_metrics_));
     monitors_.push_back(std::make_unique<MemoryMonitor>(current_metrics_));

@@ -78,6 +78,25 @@ def display_metrics(data, show_all=False):
     
     print(f"\033[1mHost:\033[0m {hostname} {status}")
     print(f"\033[1mTime:\033[0m {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # System Info
+    if "system_info" in metrics and show_all:
+        sysinfo = metrics["system_info"]
+        print()
+        print("\033[1;36m▶ SYSTEM INFO\033[0m")
+        if sysinfo.get("os_name"):
+            print(f"  OS:           {sysinfo['os_name']}")
+        if sysinfo.get("kernel"):
+            print(f"  Kernel:       {sysinfo['kernel']}")
+        if sysinfo.get("architecture"):
+            print(f"  Architecture: {sysinfo['architecture']}")
+        if sysinfo.get("cpu_model"):
+            print(f"  CPU Model:    {sysinfo['cpu_model']}")
+        if sysinfo.get("cpu_cores") and sysinfo.get("cpu_threads"):
+            print(f"  CPU:          {sysinfo['cpu_cores']} cores / {sysinfo['cpu_threads']} threads")
+        if sysinfo.get("total_memory"):
+            print(f"  Total Memory: {format_bytes(sysinfo['total_memory'])}")
+    
     print()
     
     # CPU

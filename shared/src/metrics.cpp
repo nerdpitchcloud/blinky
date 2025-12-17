@@ -14,6 +14,18 @@ std::string SystemMetrics::toJSON() const {
     json << "\"hostname\":\"" << hostname << "\",";
     json << "\"uptime\":" << uptime_seconds << ",";
     
+    json << "\"system_info\":{";
+    json << "\"hostname\":\"" << system_info.hostname << "\",";
+    json << "\"os_name\":\"" << system_info.os_name << "\",";
+    json << "\"os_version\":\"" << system_info.os_version << "\",";
+    json << "\"kernel\":\"" << system_info.kernel_version << "\",";
+    json << "\"architecture\":\"" << system_info.architecture << "\",";
+    json << "\"cpu_model\":\"" << system_info.cpu_model << "\",";
+    json << "\"cpu_cores\":" << system_info.cpu_cores << ",";
+    json << "\"cpu_threads\":" << system_info.cpu_threads << ",";
+    json << "\"total_memory\":" << system_info.total_memory_bytes;
+    json << "},";
+    
     json << "\"cpu\":{";
     json << "\"usage\":" << cpu.usage_percent << ",";
     json << "\"load_1\":" << cpu.load_1min << ",";

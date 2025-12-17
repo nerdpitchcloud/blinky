@@ -9,6 +9,18 @@
 namespace blinky {
 namespace metrics {
 
+struct SystemInfo {
+    std::string hostname;
+    std::string os_name;
+    std::string os_version;
+    std::string kernel_version;
+    std::string architecture;
+    std::string cpu_model;
+    uint32_t cpu_cores;
+    uint32_t cpu_threads;
+    uint64_t total_memory_bytes;
+};
+
 struct CPUMetrics {
     double usage_percent;
     double load_1min;
@@ -85,6 +97,7 @@ struct SystemMetrics {
     std::string hostname;
     uint64_t uptime_seconds;
     
+    SystemInfo system_info;
     CPUMetrics cpu;
     MemoryMetrics memory;
     std::vector<DiskMetrics> disks;

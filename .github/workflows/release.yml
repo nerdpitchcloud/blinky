@@ -323,6 +323,27 @@ jobs:
             echo "- Initial release" >> CHANGELOG.md
           fi
 
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view "v${{ needs.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release v${{ needs.version.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release v${{ needs.version.outputs.version }} does not exist"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete existing release if exists
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          echo "Deleting existing release v${{ needs.version.outputs.version }}..."
+          gh release delete "v${{ needs.version.outputs.version }}" -y
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -380,6 +401,27 @@ jobs:
             git tag -a "v${{ needs.version.outputs.version }}" -m "Automatic patch release v${{ needs.version.outputs.version }}"
             git push origin "v${{ needs.version.outputs.version }}"
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view "v${{ needs.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release v${{ needs.version.outputs.version }} already exists"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release v${{ needs.version.outputs.version }} does not exist"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete existing release if exists
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          echo "Deleting existing release v${{ needs.version.outputs.version }}..."
+          gh release delete "v${{ needs.version.outputs.version }}" -y
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

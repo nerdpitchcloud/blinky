@@ -16,9 +16,9 @@ struct SystemInfo {
     std::string kernel_version;
     std::string architecture;
     std::string cpu_model;
-    uint32_t cpu_cores;
-    uint32_t cpu_threads;
-    uint64_t total_memory_bytes;
+    uint32_t cpu_cores = 0;
+    uint32_t cpu_threads = 0;
+    uint64_t total_memory_bytes = 0;
 };
 
 struct CPUMetrics {

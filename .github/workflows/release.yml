@@ -292,6 +292,7 @@ jobs:
           body_path: CHANGELOG.md
           files: |
             dist/**/*.tar.gz
+            dist/**/*.deb
           draft: false
           prerelease: false
         env:
@@ -345,6 +346,7 @@ jobs:
           body_path: CHANGELOG.md
           files: |
             dist/**/*.tar.gz
+            dist/**/*.deb
           draft: false
           prerelease: false
         env:

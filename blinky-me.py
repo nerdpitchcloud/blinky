@@ -79,8 +79,8 @@ def display_metrics(data, show_all=False):
     print(f"\033[1mHost:\033[0m {hostname} {status}")
     print(f"\033[1mTime:\033[0m {time.strftime('%Y-%m-%d %H:%M:%S')}")
     
-    # System Info
-    if "system_info" in metrics and show_all:
+    # System Info - Always show
+    if "system_info" in metrics:
         sysinfo = metrics["system_info"]
         print()
         print("\033[1;36m▶ SYSTEM INFO\033[0m")
@@ -172,19 +172,22 @@ def display_metrics(data, show_all=False):
             print()
     
     print("\033[90m" + "─" * 64 + "\033[0m")
-    print("\033[90mPress Ctrl+C to exit | Use --all for detailed view\033[0m")
+    if show_all:
+        print("\033[90mPress Ctrl+C to exit | Live updates enabled\033[0m")
+    else:
+        print("\033[90mPress Ctrl+C to exit | Use --all for network/containers/k8s\033[0m")
 
 def main():
     parser = argparse.ArgumentParser(
-        description='Blinky Me - Simple metrics viewer',
+        description='Blinky Me - Live metrics viewer (auto-refreshes by default)',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s                    # Local agent
-  %(prog)s 192.168.1.100      # Remote agent
+  %(prog)s                    # Local agent (live updates)
+  %(prog)s 192.168.1.100      # Remote agent (live updates)
   %(prog)s host.example.com   # Remote agent by hostname
-  %(prog)s 10.0.0.5 -w        # Watch mode
-  %(prog)s 10.0.0.5 -w -a     # Watch with all details
+  %(prog)s 10.0.0.5 --all     # Show all details (network, containers, k8s)
+  %(prog)s --interval 2       # Faster refresh (2 seconds)
         """
     )
     
@@ -192,9 +195,6 @@ Examples:
                        nargs='?',
                        default='localhost',
                        help='Host IP or hostname (default: localhost)')
-    parser.add_argument('--watch', '-w',
-                       action='store_true',
-                       help='Watch mode - refresh every 5 seconds')
     parser.add_argument('--interval', '-i',
                        type=int,
                        default=5,
@@ -213,15 +213,11 @@ Examples:
         url = host if '/metrics' in host else f'{host}/metrics'
     
     try:
-        if args.watch:
-            print("\033[?25l", end="")  # Hide cursor
-            while True:
-                data = get_metrics(url)
-                display_metrics(data, args.all)
-                time.sleep(args.interval)
-        else:
+        print("\033[?25l", end="")  # Hide cursor
+        while True:
             data = get_metrics(url)
             display_metrics(data, args.all)
+            time.sleep(args.interval)
     except KeyboardInterrupt:
         print("\033[?25h")  # Show cursor
         print("\n\033[92m✓ Goodbye!\033[0m")

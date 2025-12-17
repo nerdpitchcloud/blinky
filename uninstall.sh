@@ -52,6 +52,23 @@ if [ -f "$SERVICE_FILE" ]; then
     systemctl daemon-reload
 fi
 
+echo "Checking for running blinky-agent processes..."
+if pgrep -x "blinky-agent" > /dev/null; then
+    echo "Stopping running blinky-agent processes..."
+    pkill -TERM -x "blinky-agent"
+    sleep 2
+    
+    if pgrep -x "blinky-agent" > /dev/null; then
+        echo "Force killing remaining processes..."
+        pkill -KILL -x "blinky-agent"
+    fi
+fi
+
+if [ -f "/var/run/blinky-agent.pid" ]; then
+    echo "Removing PID file..."
+    rm -f /var/run/blinky-agent.pid
+fi
+
 if [ -f "$INSTALL_DIR/blinky-agent" ]; then
     echo "Removing binary..."
     rm -f "$INSTALL_DIR/blinky-agent"

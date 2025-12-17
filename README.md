@@ -354,20 +354,20 @@ http://monitoring.example.com:9091/
 
 ### Monitoring
 
-View live metrics with the included Python script:
+View live metrics with the included Python script (auto-refreshes by default):
 
 ```bash
-# Local agent
+# Local agent (live updates)
 ./blinky-me.py
 
-# Remote agent
+# Remote agent (live updates)
 ./blinky-me.py 192.168.1.100
 
-# Live updates
-./blinky-me.py 192.168.1.100 -w
+# Show all details (network, containers, k8s)
+./blinky-me.py 192.168.1.100 --all
 
-# Show all details
-./blinky-me.py 192.168.1.100 -w -a
+# Custom refresh interval
+./blinky-me.py --interval 2
 ```
 
 ## API Endpoints

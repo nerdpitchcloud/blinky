@@ -7,11 +7,14 @@
 #include "http_api.h"
 #include "upgrade.h"
 #include <iostream>
+#include <fstream>
 #include <chrono>
 #include <thread>
 #include <csignal>
 #include <cstring>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 using namespace blinky;
 
@@ -20,6 +23,68 @@ static volatile bool running = true;
 void signalHandler(int signal) {
     if (signal == SIGINT || signal == SIGTERM) {
         running = false;
+    }
+}
+
+bool daemonize() {
+    pid_t pid = fork();
+    
+    if (pid < 0) {
+        std::cerr << "Failed to fork process" << std::endl;
+        return false;
+    }
+    
+    if (pid > 0) {
+        exit(0);
+    }
+    
+    if (setsid() < 0) {
+        std::cerr << "Failed to create new session" << std::endl;
+        return false;
+    }
+    
+    signal(SIGCHLD, SIG_IGN);
+    signal(SIGHUP, SIG_IGN);
+    
+    pid = fork();
+    
+    if (pid < 0) {
+        std::cerr << "Failed to fork second time" << std::endl;
+        return false;
+    }
+    
+    if (pid > 0) {
+        exit(0);
+    }
+    
+    umask(0);
+    
+    if (chdir("/") < 0) {
+        return false;
+    }
+    
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+    
+    int fd = open("/dev/null", O_RDWR);
+    if (fd != -1) {
+        dup2(fd, STDIN_FILENO);
+        dup2(fd, STDOUT_FILENO);
+        dup2(fd, STDERR_FILENO);
+        if (fd > STDERR_FILENO) {
+            close(fd);
+        }
+    }
+    
+    return true;
+}
+
+void writePidFile(const std::string& pid_file) {
+    std::ofstream file(pid_file);
+    if (file.is_open()) {
+        file << getpid() << std::endl;
+        file.close();
     }
 }
 
@@ -37,6 +102,9 @@ void printUsage(const char* program) {
               << "  -s, --server HOST       Collector server host (overrides config)\n"
               << "  -p, --port PORT         Collector server port (overrides config)\n"
               << "  -i, --interval SECONDS  Collection interval (overrides config)\n"
+              << "  -d, --daemon            Run as daemon in background (default)\n"
+              << "  -f, --foreground        Run in foreground with output\n"
+              << "  --pid-file FILE         PID file location (default: /var/run/blinky-agent.pid)\n"
               << "\n"
               << "Operating Modes:\n"
               << "  local   - Store metrics locally only\n"
@@ -50,7 +118,8 @@ void printUsage(const char* program) {
               << "  ./config.toml\n"
               << "\n"
               << "Examples:\n"
-              << "  " << program << "                    # Start agent with default config\n"
+              << "  " << program << "                    # Start agent in background (daemon)\n"
+              << "  " << program << " -f                 # Run in foreground\n"
               << "  " << program << " upgrade            # Upgrade to latest version\n"
               << "  " << program << " -m pull            # Run in pull mode\n"
               << "  " << program << " -m push -s host    # Push to collector\n"
@@ -72,6 +141,8 @@ int main(int argc, char* argv[]) {
     std::string server_host_override;
     int server_port_override = -1;
     int interval_override = -1;
+    bool run_as_daemon = true;
+    std::string pid_file = "/var/run/blinky-agent.pid";
     
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
@@ -91,6 +162,12 @@ int main(int argc, char* argv[]) {
             server_port_override = std::atoi(argv[++i]);
         } else if ((arg == "-i" || arg == "--interval") && i + 1 < argc) {
             interval_override = std::atoi(argv[++i]);
+        } else if (arg == "-d" || arg == "--daemon") {
+            run_as_daemon = true;
+        } else if (arg == "-f" || arg == "--foreground") {
+            run_as_daemon = false;
+        } else if (arg == "--pid-file" && i + 1 < argc) {
+            pid_file = argv[++i];
         } else {
             std::cerr << "Unknown option: " << arg << std::endl;
             printUsage(argv[0]);
@@ -98,18 +175,20 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    if (!config_file.empty()) {
-        if (!config.load_from_file(config_file)) {
-            std::cerr << "Failed to load config file: " << config_file << std::endl;
+    if (run_as_daemon) {
+        if (!daemonize()) {
+            std::cerr << "Failed to daemonize process" << std::endl;
             return 1;
         }
-        std::cout << "Loaded config from: " << config_file << std::endl;
-    } else {
-        if (config.load()) {
-            std::cout << "Loaded config from: " << config.get_config_path() << std::endl;
-        } else {
-            std::cout << "No config file found, using defaults" << std::endl;
+        writePidFile(pid_file);
+    }
+    
+    if (!config_file.empty()) {
+        if (!config.load_from_file(config_file)) {
+            return 1;
         }
+    } else {
+        config.load();
     }
     
     std::string mode = mode_override.empty()
@@ -143,9 +222,11 @@ int main(int argc, char* argv[]) {
     std::signal(SIGINT, signalHandler);
     std::signal(SIGTERM, signalHandler);
     
-    std::cout << "Blinky Agent " << version::getFullVersionString() << std::endl;
-    std::cout << "Operating mode: " << mode << std::endl;
-    std::cout << "Collection interval: " << interval_seconds << " seconds" << std::endl;
+    if (!run_as_daemon) {
+        std::cout << "Blinky Agent " << version::getFullVersionString() << std::endl;
+        std::cout << "Operating mode: " << mode << std::endl;
+        std::cout << "Collection interval: " << interval_seconds << " seconds" << std::endl;
+    }
     
     agent::MetricsCollector collector;
     collector.initialize();
@@ -153,20 +234,23 @@ int main(int argc, char* argv[]) {
     agent::LocalStorage* storage = nullptr;
     if (storage_enabled) {
         storage = new agent::LocalStorage(storage_path, max_files, max_file_size_mb);
-        std::cout << "Local storage: " << storage_path << std::endl;
+        if (!run_as_daemon) {
+            std::cout << "Local storage: " << storage_path << std::endl;
+        }
     }
     
     agent::HttpApi* http_api = nullptr;
     if (http_api_enabled && storage) {
         http_api = new agent::HttpApi(*storage, api_port);
         if (http_api->start()) {
-            std::cout << "HTTP API listening on port " << api_port << std::endl;
-            std::cout << "  GET http://localhost:" << api_port << "/metrics - Latest metrics" << std::endl;
-            std::cout << "  GET http://localhost:" << api_port << "/metrics/latest?count=N - Last N metrics" << std::endl;
-            std::cout << "  GET http://localhost:" << api_port << "/health - Health check" << std::endl;
-            std::cout << "  GET http://localhost:" << api_port << "/stats - Storage stats" << std::endl;
+            if (!run_as_daemon) {
+                std::cout << "HTTP API listening on port " << api_port << std::endl;
+                std::cout << "  GET http://localhost:" << api_port << "/metrics - Latest metrics" << std::endl;
+                std::cout << "  GET http://localhost:" << api_port << "/metrics/latest?count=N - Last N metrics" << std::endl;
+                std::cout << "  GET http://localhost:" << api_port << "/health - Health check" << std::endl;
+                std::cout << "  GET http://localhost:" << api_port << "/stats - Storage stats" << std::endl;
+            }
         } else {
-            std::cerr << "Failed to start HTTP API on port " << api_port << std::endl;
             delete http_api;
             http_api = nullptr;
         }
@@ -175,28 +259,26 @@ int main(int argc, char* argv[]) {
     agent::WebSocketClient* ws_client = nullptr;
     if (collector_enabled) {
         ws_client = new agent::WebSocketClient(server_host, server_port);
-        ws_client->setOnError([](const std::string& error) {
-            std::cerr << "WebSocket error: " << error << std::endl;
-        });
-        std::cout << "Collector: " << server_host << ":" << server_port << std::endl;
+        ws_client->setOnError([](const std::string&) {});
+        if (!run_as_daemon) {
+            std::cout << "Collector: " << server_host << ":" << server_port << std::endl;
+        }
     }
     
-    std::cout << "\nAgent is running..." << std::endl;
+    if (!run_as_daemon) {
+        std::cout << "\nAgent is running..." << std::endl;
+    }
     
     while (running) {
         auto metrics = collector.collectAll();
         
         if (storage) {
-            if (!storage->store(metrics)) {
-                std::cerr << "Failed to store metrics locally" << std::endl;
-            }
+            storage->store(metrics);
         }
         
         if (ws_client) {
             if (!ws_client->isConnected()) {
-                if (ws_client->connect()) {
-                    std::cout << "Connected to collector" << std::endl;
-                }
+                ws_client->connect();
             }
             
             if (ws_client->isConnected()) {
@@ -208,7 +290,6 @@ int main(int argc, char* argv[]) {
                 msg.payload = metrics.toJSON();
                 
                 if (!ws_client->send(msg.serialize())) {
-                    std::cerr << "Failed to send metrics to collector" << std::endl;
                     ws_client->disconnect();
                 }
             }
@@ -217,7 +298,9 @@ int main(int argc, char* argv[]) {
         std::this_thread::sleep_for(std::chrono::seconds(interval_seconds));
     }
     
-    std::cout << "\nShutting down agent..." << std::endl;
+    if (run_as_daemon) {
+        unlink(pid_file.c_str());
+    }
     
     if (http_api) {
         http_api->stop();

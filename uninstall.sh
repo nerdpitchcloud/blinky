@@ -56,7 +56,7 @@ fi
 # Remove binary
 if [ -f "$INSTALL_DIR/blinky-agent" ]; then
     echo "Removing binary..."
-    rm -f "$INSTALL_DIR/blinky-agent
+    rm -f "$INSTALL_DIR/blinky-agent"
 fi
 
 # Ask about config and data

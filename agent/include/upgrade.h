@@ -112,6 +112,29 @@ private:
     std::string repo_;
 
     std::string detect_architecture() {
+        // Try runtime detection first (in case binary was copied from different arch)
+        std::string cmd = "uname -m 2>/dev/null";
+        FILE* pipe = popen(cmd.c_str(), "r");
+        if (pipe) {
+            char buffer[128];
+            std::string result;
+            if (fgets(buffer, sizeof(buffer), pipe) != nullptr) {
+                result = buffer;
+                // Remove newline
+                if (!result.empty() && result[result.length()-1] == '\n') {
+                    result.erase(result.length()-1);
+                }
+            }
+            pclose(pipe);
+            
+            if (result == "x86_64") {
+                return "amd64";
+            } else if (result == "aarch64" || result == "arm64") {
+                return "arm64";
+            }
+        }
+        
+        // Fallback to compile-time detection
         #if defined(__x86_64__) || defined(_M_X64)
             return "amd64";
         #elif defined(__aarch64__) || defined(_M_ARM64)

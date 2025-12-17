@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [amd64]
+        arch: [amd64, arm64]
     
     steps:
       - name: Checkout code
@@ -74,11 +74,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up build environment
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up build environment (AMD64)
+        if: matrix.arch == 'amd64'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake libssl-dev
 
+      - name: Set up build environment (ARM64)
+        if: matrix.arch == 'arm64'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake qemu-user-static
+          
       - name: Build binaries (AMD64)
         if: matrix.arch == 'amd64'
         run: |
@@ -89,14 +102,15 @@ jobs:
       - name: Build binaries (ARM64)
         if: matrix.arch == 'arm64'
         run: |
-          mkdir build && cd build
-          cmake -DCMAKE_BUILD_TYPE=Release \
-                -DCMAKE_SYSTEM_NAME=Linux \
-                -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
-                -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
-                -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
-                ..
-          make -j$(nproc)
+          docker run --rm --platform linux/arm64 \
+            -v $PWD:/workspace \
+            -w /workspace \
+            arm64v8/ubuntu:22.04 \
+            bash -c "apt-get update && \
+                     apt-get install -y build-essential cmake libssl-dev && \
+                     mkdir -p build && cd build && \
+                     cmake -DCMAKE_BUILD_TYPE=Release .. && \
+                     make -j\$(nproc)"
 
       - name: Package binaries
         run: |
@@ -115,6 +129,9 @@ jobs:
     name: Build DEB Package
     needs: version
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [amd64, arm64]
     
     steps:
       - name: Checkout code
@@ -122,21 +139,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up build environment
+      - name: Set up QEMU
+        if: matrix.arch == 'arm64'
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
+      - name: Set up build environment (AMD64)
+        if: matrix.arch == 'amd64'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential cmake libssl-dev dpkg-dev
 
-      - name: Build binaries
+      - name: Build binaries (AMD64)
+        if: matrix.arch == 'amd64'
         run: |
           mkdir build && cd build
           cmake -DCMAKE_BUILD_TYPE=Release ..
           make -j$(nproc)
 
+      - name: Build binaries (ARM64)
+        if: matrix.arch == 'arm64'
+        run: |
+          docker run --rm --platform linux/arm64 \
+            -v $PWD:/workspace \
+            -w /workspace \
+            arm64v8/ubuntu:22.04 \
+            bash -c "apt-get update && \
+                     apt-get install -y build-essential cmake libssl-dev && \
+                     mkdir -p build && cd build && \
+                     cmake -DCMAKE_BUILD_TYPE=Release .. && \
+                     make -j\$(nproc)"
+
       - name: Create DEB package structure
         run: |
           VERSION=${{ needs.version.outputs.version }}
-          PKG_NAME="blinky-agent_${VERSION}_amd64"
+          PKG_NAME="blinky-agent_${VERSION}_${{ matrix.arch }}"
           mkdir -p ${PKG_NAME}/DEBIAN
           mkdir -p ${PKG_NAME}/usr/local/bin
           mkdir -p ${PKG_NAME}/etc/blinky
@@ -187,8 +225,9 @@ jobs:
           After=network.target
           
           [Service]
-          Type=simple
-          ExecStart=/usr/local/bin/blinky-agent
+          Type=forking
+          ExecStart=/usr/local/bin/blinky-agent -d
+          PIDFile=/var/run/blinky-agent.pid
           Restart=always
           RestartSec=10
           
@@ -202,7 +241,7 @@ jobs:
           Version: ${VERSION}
           Section: admin
           Priority: optional
-          Architecture: amd64
+          Architecture: ${{ matrix.arch }}
           Maintainer: Blinky Team <blinky@example.com>
           Description: Lightweight monitoring agent for Linux hosts
            Blinky is a real-time monitoring system that collects system metrics
@@ -252,7 +291,7 @@ jobs:
       - name: Upload DEB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: deb-package
+          name: deb-package-${{ matrix.arch }}
           path: dist/*.deb
 
   release:

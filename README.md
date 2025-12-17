@@ -8,8 +8,6 @@
 
 Blinky is a lightweight, real-time monitoring system for Linux hosts, specifically designed for Debian-based systems. It provides comprehensive system monitoring with minimal dependencies and overhead.
 
-**Supported Architectures:** AMD64 (x86_64) and ARM64 (aarch64)
-
 ## Installation
 
 ```bash

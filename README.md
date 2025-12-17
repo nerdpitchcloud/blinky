@@ -2,15 +2,21 @@
 
 Blinky is a lightweight, real-time monitoring system for Linux hosts, specifically designed for Debian-based systems. It provides comprehensive system monitoring with minimal dependencies and overhead.
 
+**Supported Architectures:** AMD64 (x86_64) and ARM64 (aarch64)
+
 ## Installation
 
 ```bash
-# Quick install (any Linux)
+# Quick install (any Linux - auto-detects architecture)
 curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash
 
-# Debian/Ubuntu (DEB package)
-wget https://github.com/nerdpitchcloud/blinky/releases/latest/download/blinky-agent_0.1.14_amd64.deb
-sudo dpkg -i blinky-agent_0.1.14_amd64.deb
+# Debian/Ubuntu DEB package (AMD64)
+wget https://github.com/nerdpitchcloud/blinky/releases/latest/download/blinky-agent_VERSION_amd64.deb
+sudo dpkg -i blinky-agent_VERSION_amd64.deb
+
+# Debian/Ubuntu DEB package (ARM64)
+wget https://github.com/nerdpitchcloud/blinky/releases/latest/download/blinky-agent_VERSION_arm64.deb
+sudo dpkg -i blinky-agent_VERSION_arm64.deb
 
 # Upgrade
 sudo blinky-agent upgrade

@@ -151,27 +151,15 @@ VERSION=${1:-latest}
 echo "Target version: $VERSION"
 echo ""
 
-if [ "$ARCH" = "amd64" ]; then
-    if install_from_binary "$VERSION" "$ARCH"; then
-        echo ""
-        echo "Installation complete (from pre-built binary)"
-    else
-        echo "Failed to download pre-built binary, falling back to source build..."
-        echo ""
-        install_from_source
-        echo ""
-        echo "Installation complete (built from source)"
-    fi
-elif [ "$ARCH" = "arm64" ]; then
-    echo "ARM64 detected - pre-built binaries not available"
-    echo "Will build from source instead"
+if install_from_binary "$VERSION" "$ARCH"; then
+    echo ""
+    echo "Installation complete (from pre-built binary)"
+else
+    echo "Failed to download pre-built binary for $ARCH, falling back to source build..."
     echo ""
     install_from_source
     echo ""
     echo "Installation complete (built from source)"
-else
-    echo "Error: Unsupported architecture: $ARCH"
-    exit 1
 fi
 
 echo ""

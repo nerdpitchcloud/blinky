@@ -15,7 +15,6 @@ if [ "$EUID" -ne 0 ]; then
     exit 1
 fi
 
-# Check if blinky-agent is installed
 if [ ! -f "$INSTALL_DIR/blinky-agent" ]; then
     echo "Blinky agent is not installed at $INSTALL_DIR/blinky-agent"
     exit 1
@@ -39,7 +38,6 @@ echo ""
 echo "Uninstalling Blinky..."
 echo ""
 
-# Stop and disable service if it exists
 if [ -f "$SERVICE_FILE" ]; then
     echo "Stopping blinky-agent service..."
     systemctl stop blinky-agent 2>/dev/null || true
@@ -53,13 +51,11 @@ if [ -f "$SERVICE_FILE" ]; then
     systemctl daemon-reload
 fi
 
-# Remove binary
 if [ -f "$INSTALL_DIR/blinky-agent" ]; then
     echo "Removing binary..."
     rm -f "$INSTALL_DIR/blinky-agent"
 fi
 
-# Ask about config and data
 echo ""
 read -p "Remove configuration files in $CONFIG_DIR? (y/N) " -n 1 -r
 echo
@@ -84,7 +80,6 @@ echo ""
 echo "Uninstall complete!"
 echo ""
 
-# Show what remains
 REMAINING=""
 if [ -d "$CONFIG_DIR" ]; then
     REMAINING="${REMAINING}  - Configuration: $CONFIG_DIR\n"

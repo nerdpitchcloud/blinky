@@ -92,8 +92,11 @@ def display_metrics(data, show_all=False):
             print(f"  Architecture: {sysinfo['architecture']}")
         if sysinfo.get("cpu_model"):
             print(f"  CPU Model:    {sysinfo['cpu_model']}")
-        if sysinfo.get("cpu_cores") and sysinfo.get("cpu_threads"):
-            print(f"  CPU:          {sysinfo['cpu_cores']} cores / {sysinfo['cpu_threads']} threads")
+        # Fix: Ensure cpu_cores and cpu_threads are valid integers
+        cpu_cores = sysinfo.get("cpu_cores", 0)
+        cpu_threads = sysinfo.get("cpu_threads", 0)
+        if cpu_cores and cpu_threads and cpu_cores < 1000 and cpu_threads < 1000:
+            print(f"  CPU:          {cpu_cores} cores / {cpu_threads} threads")
         if sysinfo.get("total_memory"):
             print(f"  Total Memory: {format_bytes(sysinfo['total_memory'])}")
     
@@ -128,39 +131,49 @@ def display_metrics(data, show_all=False):
             print(f"  ... and {len(metrics['disks']) - 3} more (use --all to show)")
         print()
     
-    # Network
-    if "network" in metrics and metrics["network"] and show_all:
+    # Network - Show top 3 by default, all with --all
+    if "network" in metrics and metrics["network"]:
         print("\033[1;32m▶ NETWORK\033[0m")
-        for iface in metrics["network"][:3]:
+        ifaces = metrics["network"][:None if show_all else 5]
+        for iface in ifaces:
             print(f"  {iface['interface']}")
             print(f"    RX: {format_bytes(iface.get('rx_bytes', 0))}  TX: {format_bytes(iface.get('tx_bytes', 0))}")
             if iface.get('rx_errors', 0) > 0 or iface.get('tx_errors', 0) > 0:
                 print(f"    \033[91mErrors: RX {iface.get('rx_errors', 0)} TX {iface.get('tx_errors', 0)}\033[0m")
+        if len(metrics["network"]) > 5 and not show_all:
+            print(f"  ... and {len(metrics['network']) - 5} more (use --all to show)")
         print()
     
-    # Containers
-    if "containers" in metrics and metrics["containers"] and show_all:
+    # Containers - Always show if present
+    if "containers" in metrics and metrics["containers"]:
         print("\033[1;36m▶ CONTAINERS\033[0m")
-        for container in metrics["containers"][:5]:
+        containers = metrics["containers"][:None if show_all else 10]
+        for container in containers:
             state_color = '\033[92m' if container['state'] == 'running' else '\033[91m'
             print(f"  {state_color}●\033[0m {container['name']} ({container['runtime']})")
             if container.get('cpu_percent', 0) > 0:
                 print(f"    CPU: {container['cpu_percent']:.1f}%  MEM: {format_bytes(container.get('memory_bytes', 0))}")
+        if len(metrics["containers"]) > 10 and not show_all:
+            print(f"  ... and {len(metrics['containers']) - 10} more (use --all to show)")
         print()
     
-    # Kubernetes
-    if "kubernetes" in metrics and metrics["kubernetes"].get("detected") and show_all:
+    # Kubernetes - Always show if detected
+    if "kubernetes" in metrics and metrics["kubernetes"].get("detected"):
         k8s = metrics["kubernetes"]
         print("\033[1;35m▶ KUBERNETES\033[0m")
         print(f"  Type:       {k8s.get('cluster_type', 'unknown')}")
         print(f"  Pods:       {k8s.get('pod_count', 0)}")
         print(f"  Nodes:      {k8s.get('node_count', 0)}")
         print(f"  Namespaces: {len(k8s.get('namespaces', []))}")
+        if show_all and k8s.get('namespaces'):
+            print(f"  Namespace list: {', '.join(k8s.get('namespaces', []))}")
         print()
     
-    # SMART (only if errors detected)
-    if "smart_data" in metrics and metrics["smart_data"] and show_all:
+    # SMART - Always show if there are warnings
+    if "smart_data" in metrics and metrics["smart_data"]:
         failed = [s for s in metrics["smart_data"] if not s.get("passed", True)]
+        healthy = [s for s in metrics["smart_data"] if s.get("passed", True)]
+        
         if failed:
             print("\033[1;31m▶ SMART WARNINGS\033[0m")
             for smart in failed:
@@ -170,12 +183,20 @@ def display_metrics(data, show_all=False):
                 if smart.get('reallocated_sectors', 0) > 0:
                     print(f"    Reallocated sectors: {smart['reallocated_sectors']}")
             print()
+        
+        if show_all and healthy:
+            print("\033[1;32m▶ SMART STATUS\033[0m")
+            for smart in healthy:
+                temp = smart.get('temperature', 0)
+                temp_color = '\033[92m' if temp < 45 else '\033[93m' if temp < 55 else '\033[91m'
+                print(f"  \033[92m✓\033[0m {smart['device']}: {smart.get('health_status', 'OK')} {temp_color}({temp}°C)\033[0m")
+            print()
     
     print("\033[90m" + "─" * 64 + "\033[0m")
     if show_all:
-        print("\033[90mPress Ctrl+C to exit | Live updates enabled\033[0m")
+        print("\033[90mPress Ctrl+C to exit | Showing all details\033[0m")
     else:
-        print("\033[90mPress Ctrl+C to exit | Use --all for network/containers/k8s\033[0m")
+        print("\033[90mPress Ctrl+C to exit | Use --all for more details\033[0m")
 
 def main():
     parser = argparse.ArgumentParser(

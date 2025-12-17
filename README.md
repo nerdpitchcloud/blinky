@@ -270,6 +270,19 @@ If running as a service, restart it after upgrade:
 sudo systemctl restart blinky-agent
 ```
 
+## Uninstalling
+
+Remove Blinky from your system:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/uninstall.sh | sudo bash
+```
+
+The uninstall script will:
+- Stop and disable the service (if running)
+- Remove the binary
+- Optionally remove configuration and stored metrics
+
 ## Building
 
 ### Prerequisites

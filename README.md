@@ -352,33 +352,26 @@ Options:
 http://monitoring.example.com:9091/
 ```
 
-### Monitoring Tools
+### Monitoring
 
-#### Live Terminal Monitor (btop-style)
-
-Monitor all hosts in real-time with a live updating terminal interface:
+View live metrics with the included Python script:
 
 ```bash
-./blinky-monitor.py http://localhost:9091/api/metrics
+# Quick snapshot
+./blinky-me.py
+
+# Live updates
+./blinky-me.py --watch
+
+# Show all details
+./blinky-me.py --all --watch
+
+# Remote agent
+./blinky-me.py --url http://host:9092/metrics
+
+# Collector
+./blinky-me.py --collector http://host:9091/api/metrics --watch
 ```
-
-Features:
-- Auto-refreshing every 5 seconds
-- Color-coded status indicators
-- Progress bars for CPU, memory, and disk usage
-- Shows all metrics: CPU, memory, disks, SMART health, network, containers, Kubernetes
-- Version mismatch warnings
-- Clean terminal UI
-
-#### Quick Status Check
-
-Get a quick snapshot of all hosts:
-
-```bash
-./blinky-check.sh http://localhost:9091/api/metrics
-```
-
-This provides a one-time status check without live updates, useful for scripts and automation.
 
 ## API Endpoints
 

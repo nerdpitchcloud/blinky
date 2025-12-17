@@ -389,21 +389,6 @@ jobs:
             git log --pretty=format:"- %s" -10 >> CHANGELOG.md
           fi
 
-      - name: Create and push tag
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Check if tag already exists
-          if git rev-parse "v${{ needs.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "Tag v${{ needs.version.outputs.version }} already exists, skipping tag creation"
-          else
-            git tag -a "v${{ needs.version.outputs.version }}" -m "Automatic patch release v${{ needs.version.outputs.version }}"
-            git push origin "v${{ needs.version.outputs.version }}"
-          fi
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Check if release exists
         id: check_release
         run: |

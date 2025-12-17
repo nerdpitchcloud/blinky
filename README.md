@@ -10,9 +10,13 @@ Blinky is a lightweight, real-time monitoring system for Linux hosts, specifical
 
 ## Installation
 
+### Agent Installation
+
+Install the monitoring agent on hosts you want to monitor:
+
 ```bash
 # Quick install (any Linux - auto-detects architecture)
-curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-agent.sh | sudo bash
 
 # Debian/Ubuntu DEB package (AMD64)
 wget https://github.com/nerdpitchcloud/blinky/releases/latest/download/blinky-agent_VERSION_amd64.deb
@@ -26,7 +30,31 @@ sudo dpkg -i blinky-agent_VERSION_arm64.deb
 sudo blinky-agent upgrade
 
 # Uninstall
-curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/uninstall.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/uninstall-agent.sh | sudo bash
+```
+
+### Collector Installation
+
+Install the collector on your central monitoring server:
+
+```bash
+# Quick install (any Linux - auto-detects architecture)
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/install-collector.sh | sudo bash
+
+# Binary tarball (AMD64)
+wget https://github.com/nerdpitchcloud/blinky/releases/latest/download/blinky-collector-VERSION-linux-amd64.tar.gz
+tar -xzf blinky-collector-VERSION-linux-amd64.tar.gz
+sudo mv collector/blinky-collector /usr/local/bin/
+sudo chmod +x /usr/local/bin/blinky-collector
+
+# Binary tarball (ARM64)
+wget https://github.com/nerdpitchcloud/blinky/releases/latest/download/blinky-collector-VERSION-linux-arm64.tar.gz
+tar -xzf blinky-collector-VERSION-linux-arm64.tar.gz
+sudo mv collector/blinky-collector /usr/local/bin/
+sudo chmod +x /usr/local/bin/blinky-collector
+
+# Uninstall
+curl -fsSL https://raw.githubusercontent.com/nerdpitchcloud/blinky/main/uninstall-collector.sh | sudo bash
 ```
 
 ## Operating Modes
@@ -113,9 +141,46 @@ For complete configuration options, see:
 - [CONFIGURATION.md](CONFIGURATION.md) - Complete configuration guide
 - [config.toml.example](config.toml.example) - Example with all options
 
-### Collector (Docker)
+## Collector
 
-The collector runs in a Docker container. See the deployment section below for Docker Compose configuration.
+The collector is a lightweight C++ server that receives metrics from agents and provides REST API endpoints for querying. It runs directly on the host (no Docker required).
+
+### Running the Collector
+
+```bash
+# Start the collector
+blinky-collector
+
+# Or specify custom ports
+blinky-collector --ws-port 9090 --http-port 9091
+```
+
+The collector provides:
+- **WebSocket server** (port 9090) - Receives metrics from agents
+- **HTTP REST API** (port 9091) - Query metrics and host status
+
+### API Endpoints
+
+- `GET /api/metrics` - Get all host metrics
+- `GET /api/hosts` - List connected hosts  
+- `GET /health` - Health check
+
+### Configuration
+
+Edit `/etc/blinky/collector.toml`:
+
+```toml
+[collector]
+ws_port = 9090
+http_port = 9091
+bind_address = "0.0.0.0"
+
+[storage]
+path = "/var/lib/blinky/collector"
+max_metrics_per_host = 1000
+persistent = true
+max_age_hours = 24
+```
 
 ## License
 

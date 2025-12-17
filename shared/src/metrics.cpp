@@ -51,7 +51,15 @@ std::string SystemMetrics::toJSON() const {
         json << "\"total\":" << disks[i].total_bytes << ",";
         json << "\"used\":" << disks[i].used_bytes << ",";
         json << "\"available\":" << disks[i].available_bytes << ",";
-        json << "\"usage\":" << disks[i].usage_percent;
+        json << "\"usage\":" << disks[i].usage_percent << ",";
+        json << "\"read_bytes\":" << disks[i].read_bytes << ",";
+        json << "\"write_bytes\":" << disks[i].write_bytes << ",";
+        json << "\"read_ops\":" << disks[i].read_ops << ",";
+        json << "\"write_ops\":" << disks[i].write_ops << ",";
+        json << "\"read_bytes_per_sec\":" << disks[i].read_bytes_per_sec << ",";
+        json << "\"write_bytes_per_sec\":" << disks[i].write_bytes_per_sec << ",";
+        json << "\"read_ops_per_sec\":" << disks[i].read_ops_per_sec << ",";
+        json << "\"write_ops_per_sec\":" << disks[i].write_ops_per_sec;
         json << "}";
     }
     json << "],";
@@ -81,7 +89,11 @@ std::string SystemMetrics::toJSON() const {
         json << "\"rx_packets\":" << network[i].rx_packets << ",";
         json << "\"tx_packets\":" << network[i].tx_packets << ",";
         json << "\"rx_errors\":" << network[i].rx_errors << ",";
-        json << "\"tx_errors\":" << network[i].tx_errors;
+        json << "\"tx_errors\":" << network[i].tx_errors << ",";
+        json << "\"rx_bytes_per_sec\":" << network[i].rx_bytes_per_sec << ",";
+        json << "\"tx_bytes_per_sec\":" << network[i].tx_bytes_per_sec << ",";
+        json << "\"rx_packets_per_sec\":" << network[i].rx_packets_per_sec << ",";
+        json << "\"tx_packets_per_sec\":" << network[i].tx_packets_per_sec;
         json << "}";
     }
     json << "],";
@@ -107,9 +119,25 @@ std::string SystemMetrics::toJSON() const {
         json << "\"name\":\"" << containers[i].name << "\",";
         json << "\"runtime\":\"" << containers[i].runtime << "\",";
         json << "\"state\":\"" << containers[i].state << "\",";
-        json << "\"cpu\":" << containers[i].cpu_percent << ",";
-        json << "\"memory\":" << containers[i].memory_bytes << ",";
-        json << "\"memory_limit\":" << containers[i].memory_limit;
+        json << "\"image\":\"" << containers[i].image << "\",";
+        json << "\"cpu_percent\":" << containers[i].cpu_percent << ",";
+        json << "\"memory_bytes\":" << containers[i].memory_bytes << ",";
+        json << "\"memory_limit\":" << containers[i].memory_limit << ",";
+        json << "\"memory_percent\":" << containers[i].memory_percent << ",";
+        json << "\"memory_cache\":" << containers[i].memory_cache << ",";
+        json << "\"network_rx_bytes\":" << containers[i].network_rx_bytes << ",";
+        json << "\"network_tx_bytes\":" << containers[i].network_tx_bytes << ",";
+        json << "\"network_rx_packets\":" << containers[i].network_rx_packets << ",";
+        json << "\"network_tx_packets\":" << containers[i].network_tx_packets << ",";
+        json << "\"network_rx_errors\":" << containers[i].network_rx_errors << ",";
+        json << "\"network_tx_errors\":" << containers[i].network_tx_errors << ",";
+        json << "\"network_rx_bytes_per_sec\":" << containers[i].network_rx_bytes_per_sec << ",";
+        json << "\"network_tx_bytes_per_sec\":" << containers[i].network_tx_bytes_per_sec << ",";
+        json << "\"block_read_bytes\":" << containers[i].block_read_bytes << ",";
+        json << "\"block_write_bytes\":" << containers[i].block_write_bytes << ",";
+        json << "\"block_read_bytes_per_sec\":" << containers[i].block_read_bytes_per_sec << ",";
+        json << "\"block_write_bytes_per_sec\":" << containers[i].block_write_bytes_per_sec << ",";
+        json << "\"pids\":" << containers[i].pids;
         json << "}";
     }
     json << "],";
@@ -125,7 +153,25 @@ std::string SystemMetrics::toJSON() const {
         json << "\"" << kubernetes.namespaces[i] << "\"";
     }
     json << "]";
-    json << "}";
+    json << "},";
+    
+    json << "\"temperatures\":[";
+    for (size_t i = 0; i < temperatures.size(); ++i) {
+        if (i > 0) json << ",";
+        json << "{";
+        json << "\"sensor\":\"" << temperatures[i].sensor_name << "\",";
+        json << "\"type\":\"" << temperatures[i].sensor_type << "\",";
+        json << "\"label\":\"" << temperatures[i].label << "\",";
+        json << "\"temp\":" << temperatures[i].temperature;
+        if (temperatures[i].max > 0) {
+            json << ",\"max\":" << temperatures[i].max;
+        }
+        if (temperatures[i].critical > 0) {
+            json << ",\"critical\":" << temperatures[i].critical;
+        }
+        json << "}";
+    }
+    json << "]";
     
     json << "}";
     

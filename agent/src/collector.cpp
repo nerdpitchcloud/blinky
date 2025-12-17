@@ -1,5 +1,6 @@
 #include "collector.h"
 #include "system_info.h"
+#include "temperature_monitor.h"
 #include <unistd.h>
 #include <cstring>
 #include <ctime>
@@ -32,6 +33,7 @@ void MetricsCollector::initialize() {
     monitors_.push_back(std::make_unique<SystemdMonitor>(current_metrics_));
     monitors_.push_back(std::make_unique<ContainerMonitor>(current_metrics_));
     monitors_.push_back(std::make_unique<KubernetesMonitor>(current_metrics_));
+    monitors_.push_back(std::make_unique<TemperatureMonitor>(current_metrics_));
 }
 
 metrics::SystemMetrics MetricsCollector::collectAll() {

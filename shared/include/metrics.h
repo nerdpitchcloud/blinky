@@ -44,6 +44,14 @@ struct DiskMetrics {
     uint64_t used_bytes;
     uint64_t available_bytes;
     double usage_percent;
+    uint64_t read_bytes = 0;
+    uint64_t write_bytes = 0;
+    uint64_t read_ops = 0;
+    uint64_t write_ops = 0;
+    double read_bytes_per_sec = 0.0;
+    double write_bytes_per_sec = 0.0;
+    double read_ops_per_sec = 0.0;
+    double write_ops_per_sec = 0.0;
 };
 
 struct SmartMetrics {
@@ -64,6 +72,10 @@ struct NetworkMetrics {
     uint64_t tx_packets;
     uint64_t rx_errors;
     uint64_t tx_errors;
+    double rx_bytes_per_sec = 0.0;
+    double tx_bytes_per_sec = 0.0;
+    double rx_packets_per_sec = 0.0;
+    double tx_packets_per_sec = 0.0;
 };
 
 struct SystemdServiceMetrics {
@@ -79,9 +91,27 @@ struct ContainerMetrics {
     std::string name;
     std::string runtime;
     std::string state;
-    double cpu_percent;
-    uint64_t memory_bytes;
-    uint64_t memory_limit;
+    std::string image;
+    double cpu_percent = 0.0;
+    uint64_t cpu_usage = 0;
+    uint64_t system_cpu_usage = 0;
+    uint64_t memory_bytes = 0;
+    uint64_t memory_limit = 0;
+    double memory_percent = 0.0;
+    uint64_t memory_cache = 0;
+    uint64_t network_rx_bytes = 0;
+    uint64_t network_tx_bytes = 0;
+    uint64_t network_rx_packets = 0;
+    uint64_t network_tx_packets = 0;
+    uint64_t network_rx_errors = 0;
+    uint64_t network_tx_errors = 0;
+    uint64_t block_read_bytes = 0;
+    uint64_t block_write_bytes = 0;
+    double network_rx_bytes_per_sec = 0.0;
+    double network_tx_bytes_per_sec = 0.0;
+    double block_read_bytes_per_sec = 0.0;
+    double block_write_bytes_per_sec = 0.0;
+    int pids = 0;
 };
 
 struct KubernetesMetrics {
@@ -90,6 +120,15 @@ struct KubernetesMetrics {
     int pod_count;
     int node_count;
     std::vector<std::string> namespaces;
+};
+
+struct TemperatureMetrics {
+    std::string sensor_name;
+    std::string sensor_type;
+    std::string label;
+    double temperature = 0.0;
+    double max = 0.0;
+    double critical = 0.0;
 };
 
 struct SystemMetrics {
@@ -106,6 +145,7 @@ struct SystemMetrics {
     std::vector<SystemdServiceMetrics> systemd_services;
     std::vector<ContainerMetrics> containers;
     KubernetesMetrics kubernetes;
+    std::vector<TemperatureMetrics> temperatures;
     
     std::string toJSON() const;
     static SystemMetrics fromJSON(const std::string& json);

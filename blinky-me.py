@@ -124,9 +124,21 @@ def display_metrics(data, show_all=False):
     if "disks" in metrics and metrics["disks"]:
         print("\033[1;34m▶ DISKS\033[0m")
         for disk in metrics["disks"][:3 if not show_all else None]:
-            print(f"  {disk['mount_point']}")
-            print(f"    {format_percent(disk.get('usage_percent', 0))}")
-            print(f"    {format_bytes(disk.get('used_bytes', 0))} / {format_bytes(disk.get('total_bytes', 0))}")
+            print(f"  {disk['mount_point']} ({disk.get('device', 'unknown')})")
+            print(f"    Usage: {format_percent(disk.get('usage_percent', 0))}")
+            print(f"    Space: {format_bytes(disk.get('used_bytes', 0))} / {format_bytes(disk.get('total_bytes', 0))}")
+            
+            # Show I/O stats if available
+            read_rate = disk.get('read_bytes_per_sec', 0)
+            write_rate = disk.get('write_bytes_per_sec', 0)
+            if read_rate > 0 or write_rate > 0:
+                print(f"    I/O:   Read {format_bytes(read_rate)}/s | Write {format_bytes(write_rate)}/s")
+            
+            read_ops = disk.get('read_ops_per_sec', 0)
+            write_ops = disk.get('write_ops_per_sec', 0)
+            if read_ops > 0 or write_ops > 0:
+                print(f"    IOPS:  Read {read_ops:.0f}/s | Write {write_ops:.0f}/s")
+        
         if len(metrics["disks"]) > 3 and not show_all:
             print(f"  ... and {len(metrics['disks']) - 3} more (use --all to show)")
         print()
@@ -137,9 +149,23 @@ def display_metrics(data, show_all=False):
         ifaces = metrics["network"][:None if show_all else 5]
         for iface in ifaces:
             print(f"  {iface['interface']}")
-            print(f"    RX: {format_bytes(iface.get('rx_bytes', 0))}  TX: {format_bytes(iface.get('tx_bytes', 0))}")
+            print(f"    Total:     RX {format_bytes(iface.get('rx_bytes', 0))} | TX {format_bytes(iface.get('tx_bytes', 0))}")
+            
+            # Show bandwidth if available
+            rx_rate = iface.get('rx_bytes_per_sec', 0)
+            tx_rate = iface.get('tx_bytes_per_sec', 0)
+            if rx_rate > 0 or tx_rate > 0:
+                print(f"    Bandwidth: RX {format_bytes(rx_rate)}/s | TX {format_bytes(tx_rate)}/s")
+            
+            # Show packet rates if available
+            rx_pps = iface.get('rx_packets_per_sec', 0)
+            tx_pps = iface.get('tx_packets_per_sec', 0)
+            if rx_pps > 0 or tx_pps > 0:
+                print(f"    Packets:   RX {rx_pps:.0f}/s | TX {tx_pps:.0f}/s")
+            
             if iface.get('rx_errors', 0) > 0 or iface.get('tx_errors', 0) > 0:
-                print(f"    \033[91mErrors: RX {iface.get('rx_errors', 0)} TX {iface.get('tx_errors', 0)}\033[0m")
+                print(f"    \033[91mErrors:    RX {iface.get('rx_errors', 0)} | TX {iface.get('tx_errors', 0)}\033[0m")
+        
         if len(metrics["network"]) > 5 and not show_all:
             print(f"  ... and {len(metrics['network']) - 5} more (use --all to show)")
         print()
@@ -150,9 +176,42 @@ def display_metrics(data, show_all=False):
         containers = metrics["containers"][:None if show_all else 10]
         for container in containers:
             state_color = '\033[92m' if container['state'] == 'running' else '\033[91m'
-            print(f"  {state_color}●\033[0m {container['name']} ({container['runtime']})")
-            if container.get('cpu_percent', 0) > 0:
-                print(f"    CPU: {container['cpu_percent']:.1f}%  MEM: {format_bytes(container.get('memory_bytes', 0))}")
+            runtime = container.get('runtime', 'unknown')
+            image = container.get('image', '')
+            
+            print(f"  {state_color}●\033[0m {container['name']} ({runtime})")
+            if image:
+                print(f"    Image: {image}")
+            
+            # CPU and Memory
+            cpu_pct = container.get('cpu_percent', 0)
+            mem_bytes = container.get('memory_bytes', 0)
+            mem_limit = container.get('memory_limit', 0)
+            mem_pct = container.get('memory_percent', 0)
+            
+            if cpu_pct > 0 or mem_bytes > 0:
+                mem_str = format_bytes(mem_bytes)
+                if mem_limit > 0:
+                    mem_str += f" / {format_bytes(mem_limit)} ({mem_pct:.1f}%)"
+                print(f"    CPU: {cpu_pct:.1f}%  |  Memory: {mem_str}")
+            
+            # Network I/O
+            net_rx = container.get('network_rx_bytes_per_sec', 0)
+            net_tx = container.get('network_tx_bytes_per_sec', 0)
+            if net_rx > 0 or net_tx > 0:
+                print(f"    Network: RX {format_bytes(net_rx)}/s | TX {format_bytes(net_tx)}/s")
+            
+            # Block I/O
+            block_read = container.get('block_read_bytes_per_sec', 0)
+            block_write = container.get('block_write_bytes_per_sec', 0)
+            if block_read > 0 or block_write > 0:
+                print(f"    Disk I/O: Read {format_bytes(block_read)}/s | Write {format_bytes(block_write)}/s")
+            
+            # PIDs
+            pids = container.get('pids', 0)
+            if pids > 0:
+                print(f"    PIDs: {pids}")
+        
         if len(metrics["containers"]) > 10 and not show_all:
             print(f"  ... and {len(metrics['containers']) - 10} more (use --all to show)")
         print()
@@ -167,6 +226,40 @@ def display_metrics(data, show_all=False):
         print(f"  Namespaces: {len(k8s.get('namespaces', []))}")
         if show_all and k8s.get('namespaces'):
             print(f"  Namespace list: {', '.join(k8s.get('namespaces', []))}")
+        print()
+    
+    # Temperatures - Always show
+    if "temperatures" in metrics and metrics["temperatures"]:
+        print("\033[1;33m▶ TEMPERATURES\033[0m")
+        temps = metrics["temperatures"][:None if show_all else 10]
+        for temp in temps:
+            temp_val = temp.get('temp', 0)
+            # Color code based on temperature
+            if temp_val < 50:
+                temp_color = '\033[92m'  # Green
+            elif temp_val < 70:
+                temp_color = '\033[93m'  # Yellow
+            elif temp_val < 85:
+                temp_color = '\033[91m'  # Red
+            else:
+                temp_color = '\033[1;91m'  # Bright Red
+            
+            sensor_name = temp.get('sensor', 'Unknown')
+            label = temp.get('label', '')
+            display_name = f"{sensor_name} ({label})" if label else sensor_name
+            
+            temp_str = f"{temp_color}{temp_val:.1f}°C\033[0m"
+            
+            # Add max/critical if available
+            if temp.get('critical', 0) > 0:
+                temp_str += f" (crit: {temp.get('critical'):.0f}°C)"
+            elif temp.get('max', 0) > 0:
+                temp_str += f" (max: {temp.get('max'):.0f}°C)"
+            
+            print(f"  {display_name}: {temp_str}")
+        
+        if len(metrics["temperatures"]) > 10 and not show_all:
+            print(f"  ... and {len(metrics['temperatures']) - 10} more (use --all to show)")
         print()
     
     # SMART - Always show if there are warnings

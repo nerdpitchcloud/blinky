@@ -9,7 +9,7 @@ namespace version {
 
 constexpr int MAJOR = 0;
 constexpr int MINOR = 1;
-constexpr int PATCH = 0;
+constexpr int PATCH = 23;
 
 constexpr const char* BUILD_DATE = __DATE__;
 constexpr const char* BUILD_TIME = __TIME__;

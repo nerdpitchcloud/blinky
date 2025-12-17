@@ -1,4 +1,5 @@
 #!/bin/bash
+# Blinky Agent Uninstaller Script
 
 INSTALL_DIR="/usr/local/bin"
 CONFIG_DIR="/etc/blinky"
